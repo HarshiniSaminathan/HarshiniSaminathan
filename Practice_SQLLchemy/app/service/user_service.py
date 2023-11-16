@@ -4,6 +4,7 @@ from app.controller.user_controllor import fetch_user_data, get_total_records, i
 from app.response import success,failure
 from app.strings import success_res,failure_res
 from app.utils.validator_utils import is_email_id,is_valid_password
+
 def get_users():
     page = request.args.get('page', default=1, type=int)
     items_per_page = 10
@@ -12,7 +13,6 @@ def get_users():
     data = fetch_user_data(items_per_page, offset)
     total_records = get_total_records()
     return success(data, {'X-Total-Count': str(total_records)})
-
 def add_user():
     try:
         data = request.get_json()
@@ -24,7 +24,6 @@ def add_user():
         address = data.get('address')
         if check_email_existence(emailid):
             return failure("Email already exists", '409')
-
         insert_user(emailid, firstname, lastname, mobileno, dob, address)
         return success(success_res,'user added sucessfully')
     except Exception as e:
@@ -38,24 +37,26 @@ def check_email(emailid):
         return success(success_res, 'Email does not exists')
 
 def edit_user(emailid):
-    if request.method == 'PUT':
-        try:
-            data = request.get_json()
-            emailid = data['emailid']
-            firstname = data['firstname']
-            lastname = data['lastname']
-            mobileno = data['mobileno']
-            dob = data['dob']
-            address = data['address']
-            update_user(emailid, firstname, lastname, mobileno, dob, address)
-            return success(success_res, 'user updated successfully')
-        except Exception as e:
-            print(f"Error: {e}")
-            return failure(str(e), '500')
-    if request.method == 'GET':
-        res = get_user_by_email(emailid)
-        return success(success_res, res)
-
+    if check_email_existence(emailid):
+        if request.method == 'PUT':
+            try:
+                data = request.get_json()
+                firstname = data['firstname']
+                lastname = data['lastname']
+                mobileno = data['mobileno']
+                dob = data['dob']
+                address = data['address']
+                update_user(emailid,firstname, lastname, mobileno, dob, address)
+                return success(success_res, 'user updated successfully')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure(str(e), '500')
+        if request.method == 'GET':
+                res = get_user_by_email(emailid)
+                return success(success_res, res)
+    else:
+        return failure("Email id not found", '500')
+#
 def delete_user_route(emailid):
     try:
         if not check_email_existence(emailid):

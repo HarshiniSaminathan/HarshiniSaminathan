@@ -5,7 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class User(db.Model):
-    __tablename__ = 'userinfo'
+    __tablename__ = 'userTable'
     emailid = db.Column(db.String(255), primary_key=True)
     firstname = db.Column(db.String(100))
     lastname = db.Column(db.String(100))
