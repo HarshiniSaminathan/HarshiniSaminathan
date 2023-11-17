@@ -1,7 +1,7 @@
 
 from flask import Blueprint
 from app.service.user_service import add_user, check_email, edit_user, delete_user_route, validate_user_email, \
-    validate_user_password, get_users
+    validate_user_password, get_users,get_user_or_vendor_by_email
 
 api_blueprint = Blueprint('api', __name__)
 
@@ -11,7 +11,6 @@ def home():
 
 @api_blueprint.route('/adduser', methods=['POST'])
 def adduser():
-    print("blueprint")
     return add_user()
 
 @api_blueprint.route("/checkmail/<string:emailid>", methods=['GET'])
@@ -33,3 +32,7 @@ def validateemail(emailid):
 @api_blueprint.route("/validatepassword",methods=['GET'])
 def validatepassword():
     return validate_user_password()
+
+@api_blueprint.route('/user_or_vendor_details/<emailid>', methods=['GET'])
+def get_user_vendor_by_email(emailid):
+    return get_user_or_vendor_by_email(emailid)

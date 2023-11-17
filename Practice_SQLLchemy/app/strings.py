@@ -1,7 +1,7 @@
 
 
-success_res = "Success"
-failure_res = "Failure"
+success_res = True
+failure_res = False
 
 retrieved_success = "Retrieved successfully!"
 insertion_failed = "Insertion failed!!"
