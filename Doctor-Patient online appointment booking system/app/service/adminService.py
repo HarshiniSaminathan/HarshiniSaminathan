@@ -3,7 +3,7 @@ import base64
 
 from app.response import failure_response, success_response
 from app.controller.userController import check_email_existence
-from app.controller.adminController import insert_doctor,insert_role_password,fetch_doctor_records,get_total_doctor,insert_admin,fetch_admin_records,get_total_admin
+from app.controller.adminController import insert_doctor,insert_role_password,updateSlots,fetch_doctor_records,get_total_doctor,insert_admin,fetch_admin_records,get_total_admin,insert_slot,check_slot_inserted
 
 def register_doctor():
     try:
@@ -75,4 +75,46 @@ def register_Admin():
 def get_Register_Admin_Records():
     data = fetch_admin_records()
     total_admin = get_total_admin()
-    return success_response({'data': data, 'Doctor-Total-Count': str(total_admin)})
+    return success_response({'data': data, 'Admin-Total-Count': str(total_admin)})
+
+
+def add_Slot_To_Doctors():
+    try:
+        data = request.get_json()
+        required_fields = ['doctorEmailId','slotStartTime','slotEndTime']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+        doctorEmailId = data['doctorEmailId']
+        slotStartTime = data['slotStartTime']
+        slotEndTime = data['slotEndTime']
+        slotStatus = True    #  initially slotstatus will be True
+        if check_email_existence(doctorEmailId):
+            if check_slot_inserted(doctorEmailId,slotStartTime):
+                return failure_response(statuscode='409', content='Ths slot timimgs inserted already')
+
+            insert_slot(doctorEmailId, slotStartTime, slotStatus, slotEndTime)
+            return success_response('Slot Added Successfully')
+
+        return failure_response(statuscode='409', content='Email id does not exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+
+def update_Slots_status(doctorEmailId):
+    if check_email_existence(doctorEmailId):
+        try:
+            data = request.get_json()
+            slotStatus = data['slotStatus']
+            slotStartTime = data['slotStartTime']
+            slotEndTime = data['slotEndTime']
+            if check_email_existence(doctorEmailId):
+                updateSlots(doctorEmailId,slotStartTime, slotEndTime,slotStatus)
+                return success_response('Slots updated successfully')
+            return failure_response(statuscode='409', content='Email id does not exists')
+        except Exception as e:
+            print(f"Error: {e}")
+            return failure_response(statuscode='500', content=str(e))
+    else:
+        return failure_response(statuscode='500',content='Emailid Does Not Exists')

@@ -1,9 +1,10 @@
 import base64
 
 from app.models.doctorModel import DoctorTable
-from app.utils.commanUtils import add_in_entity
+from app.utils.commanUtils import add_in_entity, update_in_entity
 from app.models.userModel import UserTable
 from app.models.adminModel import AdminTable
+from app.models.slotModel import slotTable
 
 
 def insert_doctor(doctorName, doctorPhoneNumber, doctorAddress, doctorExperience, doctorSpecialization, binary_data,doctorEmailId):
@@ -19,9 +20,9 @@ def insert_doctor(doctorName, doctorPhoneNumber, doctorAddress, doctorExperience
     add_in_entity(new_doctor)
 
 
-def insert_role_password(doctorEmailId,password,role):
+def insert_role_password(EmailId,password,role):
     new_user=UserTable(
-        emailId=doctorEmailId,
+        emailId=EmailId,
         password=password,
         role=role
     )
@@ -81,3 +82,42 @@ def fetch_admin_records():
 def get_total_admin():
     total_admins = AdminTable.query.count()
     return total_admins
+
+def findDoctorId(doctorEmailId):
+    found_doctor=DoctorTable.query.filter_by(doctorEmailId=doctorEmailId).first()
+    if found_doctor:
+        doctorId = found_doctor.doctorId
+        return doctorId
+
+
+def insert_slot(doctorEmailId, slotStartTime, slotStatus,slotEndTime):
+    doctorId=findDoctorId(doctorEmailId)
+    new_slot=slotTable(
+        doctorId=doctorId,
+        slotStatus=slotStatus,
+        slotStartTime=slotStartTime,
+        slotEndTime=slotEndTime
+    )
+    add_in_entity(new_slot)
+
+def check_slot_inserted(doctorEmailId,slotStartTime):
+    doctorId = findDoctorId(doctorEmailId)
+    existing_slot = slotTable.query.filter_by(doctorId=doctorId, slotStartTime=slotStartTime).first()
+    if existing_slot:
+        return True
+    else:
+        return False
+
+def updateSlots(doctorEmailId,slotStartTime, slotEndTime,slotStatus):
+    try:
+        doctorId = findDoctorId(doctorEmailId)
+        slots=slotTable.query.filter_by(doctorId=doctorId,slotStartTime=slotStartTime,slotEndTime=slotEndTime)
+        if slots:
+            for slot in slots:
+                slot.slotStatus = slotStatus
+            update_in_entity()
+            return True
+        else:
+            return False
+    except Exception as e:
+        return False

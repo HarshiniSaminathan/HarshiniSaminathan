@@ -3,6 +3,8 @@ from flask_cors import CORS
 
 from config import SECRET_KEY
 from app.views.adminViews import adminapi_blueprint
+from app.views.patientViews import patientapi_blueprint
+from app.views.doctorViews import doctorapi_blueprint
 
 from app.models.patientModel import db
 from app.models.adminModel import db
@@ -15,7 +17,9 @@ from app.models.userModel import db
 app = Flask(__name__)
 CORS(app)
 
-app.register_blueprint(adminapi_blueprint, url_prefix='')
+app.register_blueprint(adminapi_blueprint)
+app.register_blueprint(patientapi_blueprint)
+app.register_blueprint(doctorapi_blueprint)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Harshini%402003@localhost:5432/appointmentbooking'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

@@ -10,3 +10,4 @@ class appointmentTable(db.Model):
     appointmentTime =db.Column(db.Time)
 
 
+
