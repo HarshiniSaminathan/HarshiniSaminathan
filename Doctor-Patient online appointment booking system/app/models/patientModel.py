@@ -1,5 +1,6 @@
 from app.models.userModel import db
-
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 class PatientTable(db.Model):
     __tablename__ = 'patientTable'
     patientId = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -10,3 +11,4 @@ class PatientTable(db.Model):
     patientAddress = db.Column(db.String(255))
     patientEmailId = db.Column(db.String(255), db.ForeignKey('userTable.emailId', ondelete='CASCADE'), unique=True)
     user = db.relationship('UserTable', back_populates='patient', uselist=False)
+    appointments = relationship("appointmentTable", back_populates="patient")

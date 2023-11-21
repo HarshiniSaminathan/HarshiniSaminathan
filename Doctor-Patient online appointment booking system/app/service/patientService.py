@@ -3,7 +3,7 @@ from flask import request
 from app.controller.adminController import insert_role_password
 from app.controller.userController import check_email_existence
 from app.response import failure_response, success_response
-from app.controller.patientController import insert_patient,fetch_Availabledoctor_records,updateProfile,fetch_slotsfor_doctor,requestingAppointmnet,appointmentNotBooked,alreadyRequestedForSameDateTime
+from app.controller.patientController import insert_patient,patient_appointments,countOfAppointmentsPerDay,fetch_Availabledoctor_records,updateProfile,fetch_slotsfor_doctor,requestingAppointmnet,appointmentNotBooked,alreadyRequestedForSameDateTime
 
 
 def register_New_Patient():
@@ -89,3 +89,21 @@ def requesting_for_appointment(patientEmailId):
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
+
+def get_patient_appointments(patientEmailId):
+    total_appointments=patient_appointments(patientEmailId)
+    return success_response({"data":total_appointments})
+
+
+def count_appointments(patientEmailId):
+    count_appointments_result = countOfAppointmentsPerDay(patientEmailId)
+
+    result = [
+        {
+            "date": appointment['date'],
+            "appointmentCount": appointment['appointmentCount']
+        }
+        for appointment in count_appointments_result
+    ]
+
+    return success_response({"Appointments-Count-With-DATE": result})

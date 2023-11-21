@@ -2,7 +2,7 @@ from flask import request
 
 from app.controller.userController import check_email_existence
 from app.response import failure_response, success_response
-from app.controller.doctorController import respondingAppointments
+from app.controller.doctorController import respondingAppointments,doctor_appointments,countOfAppointmentsPerDay
 
 def responding_for_appointment(doctorEmailId):
     try:
@@ -24,3 +24,21 @@ def responding_for_appointment(doctorEmailId):
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+
+def get_doctor_appointments(doctorEmailId):
+    total_appointments=doctor_appointments(doctorEmailId)
+    return success_response({"data":total_appointments})
+
+def count_appointments(doctorEmailId):
+    count_appointments_result = countOfAppointmentsPerDay(doctorEmailId)
+
+    result = [
+        {
+            "date": appointment['date'],
+            "appointmentCount": appointment['appointmentCount']
+        }
+        for appointment in count_appointments_result
+    ]
+
+    return success_response({"Appointments-Count-With-DATE": result})

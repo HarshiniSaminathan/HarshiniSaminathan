@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from app.service.patientService import register_New_Patient,get_Available_Doctors,profile_upadte,get_slotsfor_doctor,requesting_for_appointment
+from app.service.patientService import register_New_Patient,get_Available_Doctors,profile_upadte,get_slotsfor_doctor,requesting_for_appointment,get_patient_appointments,count_appointments
 
 patientapi_blueprint = Blueprint('patientapi', __name__, url_prefix='/api/patient')
 
@@ -23,7 +23,13 @@ def getAllSlotsforDcotor(doctorEmailId):
 def requestingForAppoinmnets(patientEmailId):
     return requesting_for_appointment(patientEmailId)
 
+@patientapi_blueprint.route("getPatientAppointments/<string:patientEmailId>",methods=['GET'])
+def getDoctorAppointments(patientEmailId):
+    return get_patient_appointments(patientEmailId)
 
+@patientapi_blueprint.route("getAppointmentsCount/<string:patientEmailId>",methods=['GET'])
+def getAppointmentsCount(patientEmailId):
+    return count_appointments(patientEmailId)
 
 
 

@@ -1,4 +1,6 @@
 from app.models.userModel import db
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 
 class DoctorTable(db.Model):
     __tablename__ = 'doctorTable'
@@ -11,3 +13,4 @@ class DoctorTable(db.Model):
     doctorSpecializationProof = db.Column(db.LargeBinary)
     doctorEmailId = db.Column(db.String(255), db.ForeignKey('userTable.emailId', ondelete='CASCADE'), unique=True)
     user = db.relationship('UserTable', back_populates='doctor', foreign_keys=[doctorEmailId])
+    appointments = relationship("appointmentTable", back_populates="doctor")

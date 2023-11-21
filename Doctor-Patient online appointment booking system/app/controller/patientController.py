@@ -1,9 +1,16 @@
+import datetime
+
+from sqlalchemy import asc, func
+
 from app.controller.adminController import findDoctorId
 from app.models.doctorModel import DoctorTable
 from app.models.patientModel import PatientTable
 from app.models.slotModel import slotTable
+from app.models.userModel import db, UserTable
 from app.utils.commanUtils import add_in_entity, update_in_entity
 from app.models.appointmentModel import appointmentTable
+from sqlalchemy import and_, or_
+from datetime import datetime
 
 
 def insert_patient(patientFirstName,patientLastName, patientPhoneNumber,patientDOB,patientAddress,patientEmailId):
@@ -132,3 +139,104 @@ def alreadyRequestedForSameDateTime(doctorEmailId,appointmentDate,appointmentTim
         return False
     else:
         return True
+
+def fetch_slotsfor_doctor(doctorEmailId):
+    doctorId = findDoctorId(doctorEmailId)
+    if doctorId is None:
+        return {"error": "Doctor not found"}
+    doctor = DoctorTable.query.get(doctorId)
+    if doctor is None:
+        return {"error": "Doctor not found"}
+
+    slots = slotTable.query.filter_by(doctorId=doctorId).all()
+
+    data = {
+        "doctor": {
+            "doctorName": doctor.doctorName,
+            "doctorPhoneNumber": doctor.doctorPhoneNumber,
+            "doctorExperience": doctor.doctorExperience,
+            "doctorSpecialization": doctor.doctorSpecialization,
+            "doctorEmailId": doctor.doctorEmailId
+        },
+        "slots": []
+    }
+
+    for slot in slots:
+        data["slots"].append(
+            {
+                "slotStatus": slot.slotStatus,
+                "slotStartTime": slot.slotStartTime.strftime("%H:%M"),
+                "slotEndTime": slot.slotEndTime.strftime("%H:%M")
+            }
+        )
+    return data
+
+
+def patient_appointments(patientEmailId):
+    patient_id = findPatientId(patientEmailId)
+    current_datetime = datetime.now()
+    appointment_status="ACCEPTED"
+    appointments = (
+        db.session.query(
+            DoctorTable.doctorName,
+            DoctorTable.doctorSpecialization,
+            DoctorTable.doctorExperience,
+            appointmentTable.appointmentDate,
+            appointmentTable.appointmentTime
+        )
+        .join(appointmentTable)
+        .join(UserTable)
+        .filter(appointmentTable.patientId == patient_id,appointmentTable.appointmentStatus==appointment_status)
+        .filter(
+            and_(
+                appointmentTable.appointmentDate > current_datetime.date(),
+                or_(
+                    appointmentTable.appointmentDate > current_datetime.date(),
+                    and_(
+                        appointmentTable.appointmentDate == current_datetime.date(),
+                        appointmentTable.appointmentTime > current_datetime.time()
+                    )
+                )
+            )
+        )
+        .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
+        .all()
+    )
+    result = [
+        {
+            "doctorName": doctorName,
+            "doctorSpecialization": doctorSpecialization,
+            "doctorExperience": doctorExperience,
+            "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+            "appointmentTime": appointment_time.strftime('%H:%M')
+        }
+        for doctorName, doctorSpecialization, doctorExperience, appointment_date, appointment_time in appointments
+    ]
+    return result
+
+
+def countOfAppointmentsPerDay(patientEmailId):
+    patient_id = findPatientId(patientEmailId)
+    current_date = datetime.now().date()
+    counts = (
+        db.session.query(
+            appointmentTable.appointmentDate,
+            func.count().label('appointmentCount')
+        )
+        .filter(appointmentTable.patientId == patient_id)
+        .filter(appointmentTable.appointmentStatus == 'ACCEPTED')  # Adjust based on your status criteria
+        .filter(appointmentTable.appointmentDate >= current_date)
+        .group_by(appointmentTable.appointmentDate)
+        .order_by(appointmentTable.appointmentDate)
+        .all()
+    )
+
+    result = [
+        {
+            "date": appointment_date.strftime('%Y-%m-%d'),
+            "appointmentCount": appointment_count
+        }
+        for appointment_date, appointment_count in counts
+    ]
+
+    return result
