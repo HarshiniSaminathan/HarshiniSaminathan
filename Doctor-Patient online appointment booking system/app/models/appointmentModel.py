@@ -10,8 +10,10 @@ class appointmentTable(db.Model):
     appointmentStatus=db.Column(db.String(255))
     appointmentDate = db.Column(db.Date)
     appointmentTime =db.Column(db.Time)
-    doctor = relationship("DoctorTable", back_populates="appointments")
-    patient = relationship("PatientTable", back_populates="appointments")
+    doctor = db.relationship("DoctorTable", back_populates="appointments") # db.
+    patient = db.relationship("PatientTable", back_populates="appointments") #db.
+    medical_record = db.relationship("MedicalRecordsTable", back_populates="appointment") # line
+    prescription = db.relationship("PrescriptionTable", back_populates="appointment")  # line
 
 
 

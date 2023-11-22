@@ -13,4 +13,6 @@ class DoctorTable(db.Model):
     doctorSpecializationProof = db.Column(db.LargeBinary)
     doctorEmailId = db.Column(db.String(255), db.ForeignKey('userTable.emailId', ondelete='CASCADE'), unique=True)
     user = db.relationship('UserTable', back_populates='doctor', foreign_keys=[doctorEmailId])
-    appointments = relationship("appointmentTable", back_populates="doctor")
+    appointments = db.relationship("appointmentTable", back_populates="doctor") #.db was added #one-many
+    slots = db.relationship('slotTable', back_populates='doctor') #added
+    feedback_sessions = db.relationship('FeedbackSession', back_populates='doctor')

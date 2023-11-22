@@ -3,6 +3,7 @@ from app.models.adminModel import db
 from app.models.appointmentModel import db
 from app.models.slotModel import db
 from app.models.doctorModel import db
+from app.models.medicalRecordsModel import MedicalRecordsTable
 from app.models.userModel import db
 
 

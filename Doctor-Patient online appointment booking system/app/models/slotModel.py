@@ -8,5 +8,6 @@ class slotTable(db.Model):
     slotStatus = db.Column(db.Boolean)
     slotStartTime = db.Column(db.Time)
     slotEndTime = db.Column(db.Time)
+    doctor = db.relationship('DoctorTable', back_populates='slots') #added
 
 

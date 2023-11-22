@@ -1,6 +1,6 @@
 from flask import Blueprint
 
-from app.service.patientService import register_New_Patient,get_Available_Doctors,profile_upadte,get_slotsfor_doctor,requesting_for_appointment,get_patient_appointments,count_appointments
+from app.service.patientService import register_New_Patient,view_prescription,get_Available_Doctors,add_PMReports,Check_Slot_Availability_Doctor,get_By_DoctorSpecialization,profile_upadte,get_slotsfor_doctor,requesting_for_appointment,get_patient_appointments,count_appointments
 
 patientapi_blueprint = Blueprint('patientapi', __name__, url_prefix='/api/patient')
 
@@ -11,6 +11,7 @@ def registerNewPatient():
 @patientapi_blueprint.route("getAvailableDcotors")
 def getAvailableDoctors():
     return get_Available_Doctors()
+
 @patientapi_blueprint.route("/profileUpdate/<string:patientEmailId>",methods=['PUT'])
 def profileUpdate(patientEmailId):
     return profile_upadte(patientEmailId)
@@ -20,7 +21,7 @@ def getAllSlotsforDcotor(doctorEmailId):
     return get_slotsfor_doctor(doctorEmailId)
 
 @patientapi_blueprint.route("requestingForAppointmnet/<string:patientEmailId>",methods=['POST'])
-def requestingForAppoinmnets(patientEmailId):
+def requestingForAppoinments(patientEmailId):
     return requesting_for_appointment(patientEmailId)
 
 @patientapi_blueprint.route("getPatientAppointments/<string:patientEmailId>",methods=['GET'])
@@ -31,5 +32,18 @@ def getDoctorAppointments(patientEmailId):
 def getAppointmentsCount(patientEmailId):
     return count_appointments(patientEmailId)
 
+@patientapi_blueprint.route("getDoctorsByDoctorSpecialization",methods=['GET'])
+def getDoctorsByDoctorSpecialization():
+    return get_By_DoctorSpecialization()
 
+@patientapi_blueprint.route("CheckSlotAvailability",methods=['GET'])
+def CheckSlotAvailabilityForDoctor():
+    return Check_Slot_Availability_Doctor()
 
+@patientapi_blueprint.route("/addPMReports",methods=['POST'])
+def addPMReports():
+    return add_PMReports()
+
+@patientapi_blueprint.route("/viewPrescription",methods=['GET'])
+def viewPrescription():
+    return view_prescription()

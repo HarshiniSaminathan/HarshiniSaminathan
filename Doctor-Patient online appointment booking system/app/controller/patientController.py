@@ -7,8 +7,10 @@ from app.models.doctorModel import DoctorTable
 from app.models.patientModel import PatientTable
 from app.models.slotModel import slotTable
 from app.models.userModel import db, UserTable
+from app.models.medicalRecordsModel import MedicalRecordsTable
 from app.utils.commanUtils import add_in_entity, update_in_entity
 from app.models.appointmentModel import appointmentTable
+from app.models.prescriptionModel import PrescriptionTable
 from sqlalchemy import and_, or_
 from datetime import datetime
 
@@ -224,7 +226,7 @@ def countOfAppointmentsPerDay(patientEmailId):
             func.count().label('appointmentCount')
         )
         .filter(appointmentTable.patientId == patient_id)
-        .filter(appointmentTable.appointmentStatus == 'ACCEPTED')  # Adjust based on your status criteria
+        .filter(appointmentTable.appointmentStatus == 'ACCEPTED')
         .filter(appointmentTable.appointmentDate >= current_date)
         .group_by(appointmentTable.appointmentDate)
         .order_by(appointmentTable.appointmentDate)
@@ -240,3 +242,149 @@ def countOfAppointmentsPerDay(patientEmailId):
     ]
 
     return result
+
+
+def doctorForSpecialization_exists(doctorSpecialization):
+    count=DoctorTable.query.filter_by(doctorSpecialization=doctorSpecialization).count()
+    if count>0:
+        return True
+    else:
+        return False
+
+
+def doctor_for_Specialization(doctorSpecialization):
+    doctors=DoctorTable.query.filter_by(doctorSpecialization=doctorSpecialization).all()
+    data=[]
+    if doctors:
+        for doctor in doctors:
+            data.append({
+
+            "doctorName": doctor.doctorName,
+            "doctorPhoneNumber": doctor.doctorPhoneNumber,
+            "doctorExperience": doctor.doctorExperience,
+            "doctorSpecialization": doctor.doctorSpecialization,
+            "doctorEmailId": doctor.doctorEmailId
+
+                })
+        return data
+
+def check_for_slotsPending(doctorEmailId,appointmentDate):
+    doctorId=findDoctorId(doctorEmailId)
+    pending_and_rejected_slots = (
+        appointmentTable.query
+        .filter(
+            appointmentTable.doctorId == doctorId,
+            appointmentTable.appointmentDate == appointmentDate,
+            appointmentTable.appointmentStatus == 'PENDING'
+        )
+        .all()
+    )
+    data=[]
+    for slots in pending_and_rejected_slots:
+        data.append(
+            {
+                "appointmentTime": slots.appointmentTime.strftime('%H:%M')
+            }
+        )
+    return data
+
+
+def check_for_slotsRejected(doctorEmailId,appointmentDate):
+    doctorId=findDoctorId(doctorEmailId)
+    pending_and_rejected_slots = (
+        appointmentTable.query
+        .filter(
+            appointmentTable.doctorId == doctorId,
+            appointmentTable.appointmentDate == appointmentDate,
+            appointmentTable.appointmentStatus == 'REJECTED'
+        )
+        .all()
+    )
+    data=[]
+    for slots in pending_and_rejected_slots:
+        data.append(
+            {
+                "appointmentTime": slots.appointmentTime.strftime('%H:%M')
+            }
+        )
+    return data
+
+
+def check_for_slotsNotRequested(doctorEmailId,appointmentDate):
+    doctorId = findDoctorId(doctorEmailId)
+    slottiming=slotTable.query.filter_by(doctorId=doctorId)
+    data=[]
+    for timimg in slottiming:
+        slotStartTime=timimg.slotStartTime.strftime('%H:%M')
+        data.append(slotStartTime)
+    print("slots in slot table",data)
+    Timeforappointment=appointmentTable.query.filter_by(doctorId=doctorId,appointmentDate=appointmentDate)
+
+    TimeInappointment=[]
+
+    for time in Timeforappointment:
+        appointmenttime=time.appointmentTime.strftime('%H:%M')
+        TimeInappointment.append(appointmenttime)
+
+    print("appoinmenttime in appointment table",TimeInappointment)
+    not_requested=[]
+    for slottime in data:
+        if slottime not in TimeInappointment:
+            not_requested.append({
+                    "appointmentTime":slottime
+                })
+    print("not requested appointment",not_requested)
+    return not_requested
+
+
+def check_appointmentAccepted(doctorEmailId,patientEmailId,appointmentDate,appointmentTime):
+    appointmentStatus="ACCEPTED"
+    doctorId=findDoctorId(doctorEmailId)
+    patientId=findPatientId(patientEmailId)
+    count=appointmentTable.query.filter_by(doctorId=doctorId,patientId=patientId,appointmentStatus=appointmentStatus,appointmentDate=appointmentDate,appointmentTime=appointmentTime).count()
+    print(count)
+    if count >0:
+        return True
+    else:
+        return False
+
+
+def findAppointmnetId(doctorEmailId,patientEmailId,appointmentDate,appointmentTime):
+    doctorId=findDoctorId(doctorEmailId)
+    patientId=findPatientId(patientEmailId)
+    appointmentStatus = "ACCEPTED"
+    appointment=appointmentTable.query.filter_by(doctorId=doctorId,patientId=patientId,appointmentDate=appointmentDate,appointmentTime=appointmentTime,appointmentStatus=appointmentStatus).first()
+    if appointment:
+        appointmentID=appointment.appointmentId
+        print(appointmentID)
+        return appointmentID
+
+def addPMReport(appointmentId,PMReport,description):
+    current_time = datetime.now().strftime('%H:%M')
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    new_report=MedicalRecordsTable(
+        appointmentId=appointmentId,
+        PMReport=PMReport,
+        description=description,
+        createdDate=current_date,
+        createdTime=current_time
+    )
+    add_in_entity(new_report)
+
+
+def prescription_datas(appointmentId):
+    prescriptions=PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
+    data=[]
+    for datas in prescriptions:
+        data.append(
+            {
+                "medication":datas.medication,
+                "dosage":datas.dosage,
+                "instruction":datas.instruction,
+                "createdDate":datas.createdDate.strftime('%Y-%m-%d'),
+                "createdTime":datas.createdTime.strftime('%H:%M')
+
+            }
+        )
+    return data
+

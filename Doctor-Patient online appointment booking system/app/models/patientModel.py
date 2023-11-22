@@ -10,5 +10,7 @@ class PatientTable(db.Model):
     patientDOB = db.Column(db.Date)
     patientAddress = db.Column(db.String(255))
     patientEmailId = db.Column(db.String(255), db.ForeignKey('userTable.emailId', ondelete='CASCADE'), unique=True)
-    user = db.relationship('UserTable', back_populates='patient', uselist=False)
-    appointments = relationship("appointmentTable", back_populates="patient")
+    user = relationship('UserTable', back_populates='patient', uselist=False) #removed.db
+    appointments = db.relationship("appointmentTable", back_populates="patient")  #.db added # one-many
+    feedback_sessions = db.relationship('FeedbackSession', back_populates='patient')
+

@@ -6,11 +6,15 @@ from app.views.adminViews import adminapi_blueprint
 from app.views.patientViews import patientapi_blueprint
 from app.views.doctorViews import doctorapi_blueprint
 
-from app.models.patientModel import db
-from app.models.adminModel import db
-from app.models.appointmentModel import db
-from app.models.slotModel import db
-from app.models.doctorModel import db
+
+from app.models.patientModel import db,PatientTable
+from app.models.adminModel import db,AdminTable
+from app.models.appointmentModel import db,appointmentTable
+from app.models.slotModel import db,slotTable
+from app.models.doctorModel import db,DoctorTable
+from app.models.medicalRecordsModel import db,MedicalRecordsTable
+from app.models.prescriptionModel import db,PrescriptionTable
+from app.models.feedbackModel import db,FeedbackSession
 from app.models.userModel import db
 
 

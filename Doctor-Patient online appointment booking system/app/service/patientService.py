@@ -1,9 +1,10 @@
 from flask import request
-
+import base64
 from app.controller.adminController import insert_role_password
 from app.controller.userController import check_email_existence
 from app.response import failure_response, success_response
-from app.controller.patientController import insert_patient,patient_appointments,countOfAppointmentsPerDay,fetch_Availabledoctor_records,updateProfile,fetch_slotsfor_doctor,requestingAppointmnet,appointmentNotBooked,alreadyRequestedForSameDateTime
+from app.controller.patientController import (insert_patient,addPMReport,findAppointmnetId,check_appointmentAccepted,patient_appointments,countOfAppointmentsPerDay,doctorForSpecialization_exists,doctor_for_Specialization,check_for_slotsPending,
+            fetch_Availabledoctor_records,prescription_datas,check_for_slotsRejected,updateProfile,check_for_slotsNotRequested,fetch_slotsfor_doctor,requestingAppointmnet,appointmentNotBooked,alreadyRequestedForSameDateTime)
 
 
 def register_New_Patient():
@@ -107,3 +108,89 @@ def count_appointments(patientEmailId):
     ]
 
     return success_response({"Appointments-Count-With-DATE": result})
+
+
+def get_By_DoctorSpecialization():
+    try:
+        data=request.get_json()
+        required_fields = ['doctorSpecialization']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+        doctorSpecialization = data['doctorSpecialization']
+        doctorSpecialization1=doctorSpecialization.upper()
+        if doctorForSpecialization_exists(doctorSpecialization):
+            result=doctor_for_Specialization(doctorSpecialization)
+            return success_response({f'data: {doctorSpecialization1}': result})
+        return failure_response(statuscode='409', content=f'Doctor not available for {doctorSpecialization1}')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+
+def Check_Slot_Availability_Doctor():
+    try:
+        data=request.get_json()
+        required_fields = ['doctorEmailId','appointmentDate']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+        doctorEmailId=data['doctorEmailId']
+        appointmentDate=data['appointmentDate']
+        if check_email_existence(doctorEmailId):
+            SlotsInPending=check_for_slotsPending(doctorEmailId,appointmentDate)
+            SlotsInRejected=check_for_slotsRejected(doctorEmailId,appointmentDate)
+            SlotsNotRequested=check_for_slotsNotRequested(doctorEmailId,appointmentDate)
+            return success_response({'PENDING SLOTS':SlotsInPending,'REJECTED SLOTS':SlotsInRejected,'SLOTS NOT REQUESTED':SlotsNotRequested})
+        return failure_response(statuscode='409', content='Email id does not exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+
+def add_PMReports():
+    try:
+        data=request.get_json()
+        doctorEmailId=data['doctorEmailId']
+        patientEmailId=data['patientEmailId']
+        appointmentDate=data['appointmentDate']
+        appointmentTime=data['appointmentTime']
+        PMReport=data['PMReport']
+        description=data['description']
+        if check_email_existence(doctorEmailId):
+            if check_email_existence(patientEmailId):
+                if check_appointmentAccepted(doctorEmailId,patientEmailId,appointmentDate,appointmentTime):
+                    try:
+                        binary_data = base64.b64decode(PMReport)
+                        print(binary_data)
+                        appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointmentDate,
+                                                          appointmentTime)
+                        addPMReport(appointmentId, binary_data, description)
+                        return success_response("PMReports Added successfully")
+                    except Exception as e:
+                        return failure_response(statuscode='400',
+                                                content='Invalid base64 encoding for doctorSpecializationProof')
+                return failure_response(statuscode='409', content="Appointment not ACCEPTED")
+            return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
+        return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+
+def view_prescription():
+    data = request.get_json()
+    doctorEmailId = data['doctorEmailId']
+    patientEmailId = data['patientEmailId']
+    appointmentDate = data['appointmentDate']
+    appointmentTime = data['appointmentTime']
+    if check_email_existence(doctorEmailId):
+        if check_email_existence(patientEmailId):
+            if check_appointmentAccepted(doctorEmailId, patientEmailId, appointmentDate, appointmentTime):
+                appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointmentDate,
+                                                  appointmentTime)
+                prescriptiondatas = prescription_datas(appointmentId)
+                return success_response({"datas":prescriptiondatas})
+            return failure_response(statuscode='409', content=f'No appointments on DATE:{appointmentDate} TIME:{appointmentTime}')
+        return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
+    return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
