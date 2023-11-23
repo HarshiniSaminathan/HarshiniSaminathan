@@ -6,6 +6,7 @@ from app.controller.adminController import findDoctorId
 from app.controller.patientController import findPatientId, findAppointmnetId
 from app.models.appointmentModel import appointmentTable
 from app.models.doctorModel import DoctorTable
+from app.models.feedbackModel import FeedbackSession
 from app.models.userModel import db, UserTable
 from app.utils.commanUtils import update_in_entity, add_in_entity
 from sqlalchemy.orm import joinedload
@@ -128,3 +129,87 @@ def addPrescription(appointmentId, medication, dosage,instruction):
         createdTime=current_time
     )
     add_in_entity(new_Prescription)
+
+
+def addFeedbackResponse(patientId,feedbackTextForDoctor,rating,feedbackResponse,doctorId):
+    try:
+        feedback=FeedbackSession.query.filter_by(patientId=patientId,doctorId=doctorId,feedbackTextForDoctor=feedbackTextForDoctor,rating=rating)
+        if feedback:
+            for feeds in feedback:
+                feeds.feedbackResponse=feedbackResponse
+            update_in_entity()
+            return True
+        else:
+            return False
+    except Exception as e:
+        return False
+
+
+def get_feedbacks(doctorEmailId):
+    doctor_id = findDoctorId(doctorEmailId)
+    feedbacks = (
+        FeedbackSession.query
+        .filter_by(doctorId=doctor_id)
+        .options(joinedload(FeedbackSession.patient))
+        .all()
+    )
+    data_list = []
+    for feedback in feedbacks:
+        patient = feedback.patient
+
+        data_list.append({
+            "patientFirstName": patient.patientFirstName,
+            "patientPhoneNumber": patient.patientPhoneNumber,
+            "patientEmailId": patient.patientEmailId,
+            "feedbacks": feedback.feedbackTextForDoctor,
+            "rating": feedback.rating,
+            "createdDate": feedback.createdDate,
+            "createdTime": feedback.createdTime.strftime('%H:%M'),
+            "feedbackResponse":feedback.feedbackResponse
+        })
+    return data_list
+
+def get_patient_PMReports(patientEmailId,doctorEmailId):
+    patient_id = findPatientId(patientEmailId)
+    doctor_id =findDoctorId(doctorEmailId)
+    appointment_status = "ACCEPTED"
+    appointments = (
+        db.session.query(
+            PatientTable.patientFirstName,
+            PatientTable.patientEmailId,
+            PatientTable.patientPhoneNumber,
+            appointmentTable.appointmentDate,
+            appointmentTable.appointmentTime
+        )
+        .join(appointmentTable)
+        .join(UserTable)
+        .filter(appointmentTable.doctorId == doctor_id, appointmentTable.appointmentStatus == appointment_status,appointmentTable.patientId == patient_id)
+        .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
+        .all()
+    )
+
+    result = []
+    for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
+        appointmentId = findAppointmnetId(doctorEmailId, patient_email, appointment_date, appointment_time)
+        medical_records = MedicalRecordsTable.query.filter_by(appointmentId=appointmentId).all()
+
+        records_for_appointment = []
+        for medical_record in medical_records:
+            PMReport = medical_record.PMReport
+            description=medical_record.description
+            EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
+
+            records_for_appointment.append({
+                "PMReport": EncodedPMReport,
+                "description":description
+            })
+
+        result.append({
+            "patientName": patient_name,
+            "patientEmailId": patient_email,
+            "patientPhoneNumber": patient_phone,
+            "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+            "appointmentTime": appointment_time.strftime('%H:%M'),
+            "medicalRecords": records_for_appointment
+        })
+    return result

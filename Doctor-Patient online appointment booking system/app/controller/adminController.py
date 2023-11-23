@@ -1,10 +1,13 @@
 import base64
 
+from sqlalchemy.orm import joinedload
+
 from app.models.doctorModel import DoctorTable
 from app.utils.commanUtils import add_in_entity, update_in_entity
 from app.models.userModel import UserTable
 from app.models.adminModel import AdminTable
 from app.models.slotModel import slotTable
+from app.models.feedbackModel import FeedbackSession
 
 
 def insert_doctor(doctorName, doctorPhoneNumber, doctorAddress, doctorExperience, doctorSpecialization, binary_data,doctorEmailId):
@@ -121,3 +124,46 @@ def updateSlots(doctorEmailId,slotStartTime, slotEndTime,slotStatus):
             return False
     except Exception as e:
         return False
+
+
+def addFeedbackResponse(patientId,feedbackTextForAdmin,rating,feedbackResponse):
+    try:
+        feedback=FeedbackSession.query.filter_by(patientId=patientId,feedbackTextForAdmin=feedbackTextForAdmin,rating=rating)
+        if feedback:
+            for feeds in feedback:
+                feeds.feedbackResponse=feedbackResponse
+            update_in_entity()
+            return True
+        else:
+            return False
+    except Exception as e:
+        return False
+
+
+
+
+def get_feedbacks():
+    feedbacks = (
+        FeedbackSession.query
+        .filter(FeedbackSession.feedbackTextForAdmin.isnot(None))
+        .options(joinedload(FeedbackSession.patient))
+        .all()
+    )
+
+    data_list = []
+
+    for feedback in feedbacks:
+        patient = feedback.patient
+
+        data_list.append({
+            "patientFirstName": patient.patientFirstName,
+            "patientPhoneNumber": patient.patientPhoneNumber,
+            "patientEmailId": patient.patientEmailId,
+            "feedbacks": feedback.feedbackTextForAdmin,
+            "rating": feedback.rating,
+            "createdDate": feedback.createdDate,
+            "createdTime": feedback.createdTime.strftime('%H:%M'),
+            "feedbackResponse":feedback.feedbackResponse
+        })
+
+    return data_list

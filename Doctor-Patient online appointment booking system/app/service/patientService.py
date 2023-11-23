@@ -3,8 +3,9 @@ import base64
 from app.controller.adminController import insert_role_password
 from app.controller.userController import check_email_existence
 from app.response import failure_response, success_response
-from app.controller.patientController import (insert_patient,addPMReport,findAppointmnetId,check_appointmentAccepted,patient_appointments,countOfAppointmentsPerDay,doctorForSpecialization_exists,doctor_for_Specialization,check_for_slotsPending,
+from app.controller.patientController import (insert_patient,get_Prescription,add_Feedback_To_Admin,add_Feedback_To_Doctor,addPMReport,findAppointmnetId,check_appointmentAccepted,patient_appointments,countOfAppointmentsPerDay,doctorForSpecialization_exists,doctor_for_Specialization,check_for_slotsPending,
             fetch_Availabledoctor_records,prescription_datas,check_for_slotsRejected,updateProfile,check_for_slotsNotRequested,fetch_slotsfor_doctor,requestingAppointmnet,appointmentNotBooked,alreadyRequestedForSameDateTime)
+
 
 
 def register_New_Patient():
@@ -65,6 +66,7 @@ def get_slotsfor_doctor(doctorEmailId):
 
 
 def requesting_for_appointment(patientEmailId):
+    from app.utils.emailSender import send_appointment_confirmation_email
     try:
         data = request.get_json()
         required_fields = ['doctorEmailId', 'appointmentDate', 'appointmentTime']
@@ -80,7 +82,10 @@ def requesting_for_appointment(patientEmailId):
                 if appointmentNotBooked(doctorEmailId,appointmentDate,appointmentTime):
                     if alreadyRequestedForSameDateTime(doctorEmailId,appointmentDate,appointmentTime,patientEmailId):
                         requestingAppointmnet(doctorEmailId,appointmentDate, appointmentTime,appointmentStatus,patientEmailId)
-                        return success_response('Appointment Requested')
+
+                        send_appointment_confirmation_email(doctor_email=doctorEmailId, patient_email=patientEmailId, appointment_date=appointmentDate,
+                                                            appointment_time=appointmentTime)
+                        return success_response('Appointment Requested and Email sent')
                     return failure_response(statuscode='409', content=f'Already your appointment for DATE:{appointmentDate} and TIME:{appointmentTime} was REJECTED')
                 return failure_response(statuscode='409', content='Appointment for this Date and Time already Booked')
             return failure_response(statuscode='409', content='Email id does not exists')
@@ -166,6 +171,9 @@ def add_PMReports():
                         appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointmentDate,
                                                           appointmentTime)
                         addPMReport(appointmentId, binary_data, description)
+                        from app.utils.emailSender import send_PMR_Report
+                        send_PMR_Report(doctor_email=doctorEmailId, patient_email=patientEmailId, appointment_time=appointmentTime, PMReport=PMReport, appointment_date=appointmentDate,
+                                        description=description)
                         return success_response("PMReports Added successfully")
                     except Exception as e:
                         return failure_response(statuscode='400',
@@ -194,3 +202,49 @@ def view_prescription():
             return failure_response(statuscode='409', content=f'No appointments on DATE:{appointmentDate} TIME:{appointmentTime}')
         return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
     return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
+
+
+
+def add_Feedback():
+    try:
+        data = request.get_json()
+        required_fields = ['patientEmailId', 'feedbackText', 'rating']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+
+        patientEmailId = data['patientEmailId']
+        feedbackText = data['feedbackText']
+        rating = data['rating']
+        doctorEmailId = data['doctorEmailId']
+        if not check_email_existence(patientEmailId):
+            return failure_response(statuscode='409', content=f'EmailId: {patientEmailId} does not exist')
+
+        if doctorEmailId and not check_email_existence(doctorEmailId):
+            return failure_response(statuscode='409', content=f'EmailId: {doctorEmailId} does not exist')
+
+        if doctorEmailId != None:
+            add_Feedback_To_Doctor(patientEmailId, doctorEmailId, feedbackText, rating)
+        else:
+            add_Feedback_To_Admin(patientEmailId, feedbackText, rating)
+
+        return success_response("Feedback added successfully")
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+def get_All_Prescription():
+    data = request.get_json()
+    required_fields = ['patientEmailId', 'doctorEmailId']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+    patientEmailId = data['patientEmailId']
+    doctorEmailId = data['doctorEmailId']
+    if check_email_existence(patientEmailId):
+        if check_email_existence(doctorEmailId):
+            reports = get_Prescription(patientEmailId, doctorEmailId)
+            return success_response({"data": reports})
+        return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
+    return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')

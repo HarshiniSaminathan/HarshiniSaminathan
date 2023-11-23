@@ -1,5 +1,8 @@
+import base64
+from datetime import datetime, timedelta
 import datetime
 
+from flask import jsonify
 from sqlalchemy import asc, func
 
 from app.controller.adminController import findDoctorId
@@ -13,6 +16,8 @@ from app.models.appointmentModel import appointmentTable
 from app.models.prescriptionModel import PrescriptionTable
 from sqlalchemy import and_, or_
 from datetime import datetime
+from app.models.feedbackModel import FeedbackSession
+
 
 
 def insert_patient(patientFirstName,patientLastName, patientPhoneNumber,patientDOB,patientAddress,patientEmailId):
@@ -383,8 +388,110 @@ def prescription_datas(appointmentId):
                 "instruction":datas.instruction,
                 "createdDate":datas.createdDate.strftime('%Y-%m-%d'),
                 "createdTime":datas.createdTime.strftime('%H:%M')
-
-            }
-        )
+            })
     return data
+
+def add_Feedback_To_Doctor(patientEmailId,doctorEmailId,feedbackText,rating):
+    patientId=findPatientId(patientEmailId)
+    doctorId=findDoctorId(doctorEmailId)
+    current_time = datetime.now().strftime('%H:%M')
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    new_feedback =  FeedbackSession(
+        patientId=patientId,
+        doctorId=doctorId,
+        feedbackTextForDoctor=feedbackText,
+        rating=rating,
+        createdDate=current_date,
+        createdTime=current_time
+    )
+    add_in_entity(new_feedback)
+
+def add_Feedback_To_Admin(patientEmailId, feedbackText, rating):
+    patientId = findPatientId(patientEmailId)
+    current_time = datetime.now().strftime('%H:%M')
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    new_feedback =  FeedbackSession(
+        patientId=patientId,
+        feedbackTextForAdmin=feedbackText,
+        rating=rating,
+        createdDate=current_date,
+        createdTime=current_time
+    )
+    add_in_entity(new_feedback)
+
+
+def get_Prescription(patientEmailId, doctorEmailId):
+    patient_id = findPatientId(patientEmailId)
+    doctor_id =findDoctorId(doctorEmailId)
+    appointment_status = "ACCEPTED"
+    appointments = (
+        db.session.query(
+            DoctorTable.doctorName,
+            DoctorTable.doctorSpecialization,
+            DoctorTable.doctorEmailId,
+            appointmentTable.appointmentDate,
+            appointmentTable.appointmentTime
+        )
+        .join(appointmentTable)
+        .join(UserTable)
+        .filter(appointmentTable.doctorId == doctor_id, appointmentTable.appointmentStatus == appointment_status,appointmentTable.patientId == patient_id)
+        .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
+        .all()
+    )
+
+    result = []
+    for doctorName, doctorSpecialization, doctorEmailId, appointment_date, appointment_time in appointments:
+        appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointment_date, appointment_time)
+        prescription_records = PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
+
+        prescription_for_appointment = []
+        for medical_record in prescription_records:
+            medication = medical_record.medication
+            dosage=medical_record.dosage
+            instruction = medical_record.dosage
+
+            prescription_for_appointment.append({
+                "medication": medication,
+                "dosage":dosage,
+                "instruction":instruction
+            })
+
+        result.append({
+            "doctorName": doctorName,
+            "doctorEmailId": doctorEmailId,
+            "doctorSpecialization": doctorSpecialization,
+            "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+            "appointmentTime": appointment_time.strftime('%H:%M'),
+            "medicalRecords": prescription_for_appointment
+        })
+    return result
+def check_for_PMR_beforeDay():
+    from app.utils.emailSender import send_email
+    today = datetime.now()
+    tomorrow = today + timedelta(days=1)
+    dateOfTomorrow = tomorrow.date()
+    appoinmtmentIds = MedicalRecordsTable.query.filter_by(appointmentDate=dateOfTomorrow).all()
+    if appoinmtmentIds:
+        patient_email_ids = []
+
+        for record in appoinmtmentIds:
+            appointment_id = record.appointmentId
+            patient_ids = appointmentTable.query.filter_by(appoinmtmentId=appointment_id).all()
+            for appointment in patient_ids:
+                patient_id = appointment.PatientId
+                patient_email = PatientTable.query.filter_by(patientId=patient_id).first()
+                if patient_email:
+                    patient_email_ids.append(patient_email.patientEmailId)
+        for email_id in patient_email_ids:
+            send_email(email_id)
+            print(email_id)
+        print('Emails sent to patients.')
+    else:
+        return False
+
+
+
+
+
+
 

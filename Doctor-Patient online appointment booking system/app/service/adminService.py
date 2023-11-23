@@ -1,9 +1,11 @@
 from flask import request
 import base64
 
+from app.controller.patientController import findPatientId
 from app.response import failure_response, success_response
 from app.controller.userController import check_email_existence
-from app.controller.adminController import insert_doctor,insert_role_password,updateSlots,fetch_doctor_records,get_total_doctor,insert_admin,fetch_admin_records,get_total_admin,insert_slot,check_slot_inserted
+from app.controller.adminController import (insert_doctor,insert_role_password,updateSlots,fetch_doctor_records,addFeedbackResponse,get_feedbacks,
+                                            get_total_doctor,insert_admin,fetch_admin_records,get_total_admin,insert_slot,check_slot_inserted)
 
 def register_doctor():
     try:
@@ -118,3 +120,31 @@ def update_Slots_status(doctorEmailId):
             return failure_response(statuscode='500', content=str(e))
     else:
         return failure_response(statuscode='500',content='Emailid Does Not Exists')
+
+
+def response_For_Feedback():
+    data=request.get_json()
+    required_fields = ['patientEmailId', 'feedbackText', 'rating','feedbackResponse']
+    for field in required_fields:
+        if field not in data or not data[field]:
+            return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+    patientEmailId = data['patientEmailId']
+    feedbackText = data['feedbackText']
+    rating = data['rating']
+    feedbackResponse=data['feedbackResponse']
+    try:
+        patientId=findPatientId(patientEmailId)
+        addFeedbackResponse(patientId,feedbackText,rating,feedbackResponse)
+        return success_response('FeedbackResponse added successfully')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=str(e))
+
+
+def get_All_Feedback():
+    try:
+        datas=get_feedbacks()
+        return success_response({"data":datas})
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=str(e))

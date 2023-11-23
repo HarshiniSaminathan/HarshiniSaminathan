@@ -9,7 +9,7 @@ class PrescriptionTable(db.Model):
     dosage = db.Column(db.String(255))
     instruction = db.Column(db.String(255))
     appointmentId = db.Column(db.Integer, db.ForeignKey('appointmentTable.appointmentId', ondelete='CASCADE'))
-    appointment = db.relationship("appointmentTable", back_populates="prescription") #line
+    appointment = db.relationship("appointmentTable", back_populates="prescription")
     createdDate = db.Column(db.Date)
     createdTime = db.Column(db.Time)
 

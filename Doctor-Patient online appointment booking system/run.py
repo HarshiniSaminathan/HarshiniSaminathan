@@ -1,6 +1,10 @@
+from datetime import time
+import time
+import schedule
 from flask import Flask
 from flask_cors import CORS
-
+from flask_mail import Mail
+from celery import Celery
 from config import SECRET_KEY
 from app.views.adminViews import adminapi_blueprint
 from app.views.patientViews import patientapi_blueprint
@@ -21,13 +25,26 @@ from app.models.userModel import db
 app = Flask(__name__)
 CORS(app)
 
-app.register_blueprint(adminapi_blueprint)
-app.register_blueprint(patientapi_blueprint)
-app.register_blueprint(doctorapi_blueprint)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:Harshini%402003@localhost:5432/appointmentbooking'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+celery = Celery(app.name, broker='redis://localhost:6379/0')
+celery.conf.update(app.config)
+
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'sharshini2003@gmail.com'
+app.config['MAIL_PASSWORD'] = 'znwm mgfw jaxc bdyp'
+mail = Mail(app)
 db.init_app(app)
+
+
+app.register_blueprint(adminapi_blueprint)
+app.register_blueprint(patientapi_blueprint)
+app.register_blueprint(doctorapi_blueprint)
 
 if __name__ == "__main__":
     app.secret_key = SECRET_KEY
@@ -35,3 +52,4 @@ if __name__ == "__main__":
         # db.drop_all()
         db.create_all()
     app.run(debug=True)
+

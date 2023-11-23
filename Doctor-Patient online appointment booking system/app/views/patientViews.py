@@ -1,6 +1,7 @@
 from flask import Blueprint
 
-from app.service.patientService import register_New_Patient,view_prescription,get_Available_Doctors,add_PMReports,Check_Slot_Availability_Doctor,get_By_DoctorSpecialization,profile_upadte,get_slotsfor_doctor,requesting_for_appointment,get_patient_appointments,count_appointments
+from app.service.patientService import (register_New_Patient,view_prescription,add_Feedback,get_All_Prescription,
+                                        get_Available_Doctors,add_PMReports,Check_Slot_Availability_Doctor,get_By_DoctorSpecialization,profile_upadte,get_slotsfor_doctor,requesting_for_appointment,get_patient_appointments,count_appointments)
 
 patientapi_blueprint = Blueprint('patientapi', __name__, url_prefix='/api/patient')
 
@@ -47,3 +48,11 @@ def addPMReports():
 @patientapi_blueprint.route("/viewPrescription",methods=['GET'])
 def viewPrescription():
     return view_prescription()
+
+@patientapi_blueprint.route("addFeedback",methods=['POST'])
+def addFeedback():
+    return add_Feedback()
+
+@patientapi_blueprint.route("getAllPrescription",methods=['GET'])
+def getAllPrescription():
+    return get_All_Prescription()

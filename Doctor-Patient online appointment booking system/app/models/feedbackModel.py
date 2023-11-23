@@ -3,6 +3,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.models.patientModel import PatientTable
+from sqlalchemy import Time
 
 class FeedbackSession(db.Model):
     __tablename__ = 'FeedbackSession'
@@ -17,7 +18,8 @@ class FeedbackSession(db.Model):
     feedbackTextForDoctor = db.Column(db.Text)
     feedbackResponse = db.Column(db.Text)
     rating = db.Column(db.Integer)
-    createdAt = db.Column(db.DateTime, default=datetime.utcnow)
+    createdDate = db.Column(db.Date)
+    createdTime = db.Column(db.Time)
 
 
 
