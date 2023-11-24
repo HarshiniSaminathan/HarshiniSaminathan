@@ -14,6 +14,5 @@ class appointmentTable(db.Model):
     patient = db.relationship("PatientTable", back_populates="appointments") #db.
     medical_record = db.relationship("MedicalRecordsTable", back_populates="appointment") # line
     prescription = db.relationship("PrescriptionTable", back_populates="appointment")  # line
-
-
+    pmr_record = db.relationship("PMRecordTable", back_populates="appointment")  # line
 

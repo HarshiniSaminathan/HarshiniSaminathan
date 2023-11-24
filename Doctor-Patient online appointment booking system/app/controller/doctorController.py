@@ -1,4 +1,5 @@
 import base64
+import os
 
 from sqlalchemy import asc, func
 
@@ -12,11 +13,14 @@ from app.utils.commanUtils import update_in_entity, add_in_entity
 from sqlalchemy.orm import joinedload
 from app.models.patientModel import PatientTable
 from sqlalchemy import and_, or_
-from app.models.medicalRecordsModel import MedicalRecordsTable
+from app.models.medicalRecordsModel import MedicalRecordsTable, PMRecordTable
 from app.models.prescriptionModel import PrescriptionTable
 
 
 from datetime import datetime
+
+
+
 
 def respondingAppointments(doctorEmailId, appointmentDate, appointmentTime, appointmentStatus, patientEmailId):
     try:
@@ -90,32 +94,36 @@ def doctor_appointments(doctorEmailId):
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
         .all()
     )
+    if appointments:
+        result = []
+        for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
+            appointmentId = findAppointmnetId(doctorEmailId, patient_email, appointment_date, appointment_time)
+            medical_records = MedicalRecordsTable.query.filter_by(appointmentId=appointmentId).all()
+            if medical_records:
+                records_for_appointment = []
+                for medical_record in medical_records:
+                    PMReport = medical_record.PMReport
+                    description=medical_record.description
+                    EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
 
-    result = []
-    for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
-        appointmentId = findAppointmnetId(doctorEmailId, patient_email, appointment_date, appointment_time)
-        medical_records = MedicalRecordsTable.query.filter_by(appointmentId=appointmentId).all()
+                    records_for_appointment.append({
+                        "PMReport": EncodedPMReport,
+                        "description":description
+                    })
 
-        records_for_appointment = []
-        for medical_record in medical_records:
-            PMReport = medical_record.PMReport
-            description=medical_record.description
-            EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
-
-            records_for_appointment.append({
-                "PMReport": EncodedPMReport,
-                "description":description
-            })
-
-        result.append({
-            "patientName": patient_name,
-            "patientEmailId": patient_email,
-            "patientPhoneNumber": patient_phone,
-            "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
-            "appointmentTime": appointment_time.strftime('%H:%M'),
-            "medicalRecords": records_for_appointment
-        })
-    return result
+                result.append({
+                    "patientName": patient_name,
+                    "patientEmailId": patient_email,
+                    "patientPhoneNumber": patient_phone,
+                    "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+                    "appointmentTime": appointment_time.strftime('%H:%M'),
+                    "medicalRecords": records_for_appointment
+                })
+            return result
+        else:
+            return None
+    else:
+        return None
 
 def addPrescription(appointmentId, medication, dosage,instruction):
     current_time = datetime.now().strftime('%H:%M')
@@ -153,21 +161,25 @@ def get_feedbacks(doctorEmailId):
         .options(joinedload(FeedbackSession.patient))
         .all()
     )
-    data_list = []
-    for feedback in feedbacks:
-        patient = feedback.patient
+    if feedbacks:
+        data_list = []
+        for feedback in feedbacks:
+            patient = feedback.patient
 
-        data_list.append({
-            "patientFirstName": patient.patientFirstName,
-            "patientPhoneNumber": patient.patientPhoneNumber,
-            "patientEmailId": patient.patientEmailId,
-            "feedbacks": feedback.feedbackTextForDoctor,
-            "rating": feedback.rating,
-            "createdDate": feedback.createdDate,
-            "createdTime": feedback.createdTime.strftime('%H:%M'),
-            "feedbackResponse":feedback.feedbackResponse
-        })
-    return data_list
+            data_list.append({
+                "patientFirstName": patient.patientFirstName,
+                "patientPhoneNumber": patient.patientPhoneNumber,
+                "patientEmailId": patient.patientEmailId,
+                "feedbacks": feedback.feedbackTextForDoctor,
+                "rating": feedback.rating,
+                "createdDate": feedback.createdDate,
+                "createdTime": feedback.createdTime.strftime('%H:%M'),
+                "feedbackResponse":feedback.feedbackResponse
+            })
+        return data_list
+    else:
+        return [{"data": None}]
+
 
 def get_patient_PMReports(patientEmailId,doctorEmailId):
     patient_id = findPatientId(patientEmailId)
@@ -187,29 +199,33 @@ def get_patient_PMReports(patientEmailId,doctorEmailId):
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
         .all()
     )
+    if appointments:
+        result = []
+        for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
+            appointmentId = findAppointmnetId(doctorEmailId, patient_email, appointment_date, appointment_time)
+            medical_records = PMRecordTable.query.filter_by(appointmentId=appointmentId).all()
 
-    result = []
-    for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
-        appointmentId = findAppointmnetId(doctorEmailId, patient_email, appointment_date, appointment_time)
-        medical_records = MedicalRecordsTable.query.filter_by(appointmentId=appointmentId).all()
+            records_for_appointment = []
+            for medical_record in medical_records:
 
-        records_for_appointment = []
-        for medical_record in medical_records:
-            PMReport = medical_record.PMReport
-            description=medical_record.description
-            EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
+                PMReport = medical_record.PMReport
+                description=medical_record.description
+                # EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
+                from run import UPLOAD_FOLDER
+                records_for_appointment.append({
+                    "PMReport": PMReport,
+                    "file_path": os.path.join(UPLOAD_FOLDER, PMReport),
+                    "description":description
+                })
 
-            records_for_appointment.append({
-                "PMReport": EncodedPMReport,
-                "description":description
+            result.append({
+                "patientName": patient_name,
+                "patientEmailId": patient_email,
+                "patientPhoneNumber": patient_phone,
+                "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+                "appointmentTime": appointment_time.strftime('%H:%M'),
+                "medicalRecords": records_for_appointment
             })
-
-        result.append({
-            "patientName": patient_name,
-            "patientEmailId": patient_email,
-            "patientPhoneNumber": patient_phone,
-            "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
-            "appointmentTime": appointment_time.strftime('%H:%M'),
-            "medicalRecords": records_for_appointment
-        })
-    return result
+        return result
+    else:
+        return [{"data":None}]

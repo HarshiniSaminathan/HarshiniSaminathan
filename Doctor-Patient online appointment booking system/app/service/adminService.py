@@ -144,7 +144,10 @@ def response_For_Feedback():
 def get_All_Feedback():
     try:
         datas=get_feedbacks()
-        return success_response({"data":datas})
+        if datas:
+            return success_response({"data":datas})
+        else:
+            return success_response({"data":None})
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content=str(e))

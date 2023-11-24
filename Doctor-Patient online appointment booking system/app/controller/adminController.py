@@ -35,22 +35,26 @@ def insert_role_password(EmailId,password,role):
 def fetch_doctor_records():
     doctorinfo=DoctorTable.query.all()
     data=[]
-    for doctor in doctorinfo:
-        data.append(
-            {
-                "doctorName": doctor.doctorName,
-                "doctorPhoneNumber": doctor.doctorPhoneNumber,
-                "doctorAddress": doctor.doctorAddress,
-                "doctorExperience":doctor.doctorExperience,
-                "doctorSpecialization" : doctor.doctorSpecialization,
-                "doctorSpecializationProof" :doctor.doctorSpecializationProof,
-                "doctorEmailId" : doctor.doctorEmailId
-            }
-        )
-    for doctor in data:
-        if 'doctorSpecializationProof' in doctor:
-            doctor['doctorSpecializationProof'] = base64.b64encode(doctor['doctorSpecializationProof']).decode('utf-8')
-    return data
+    if doctorinfo:
+        for doctor in doctorinfo:
+            data.append(
+                {
+                    "doctorName": doctor.doctorName,
+                    "doctorPhoneNumber": doctor.doctorPhoneNumber,
+                    "doctorAddress": doctor.doctorAddress,
+                    "doctorExperience":doctor.doctorExperience,
+                    "doctorSpecialization" : doctor.doctorSpecialization,
+                    "doctorSpecializationProof" :doctor.doctorSpecializationProof,
+                    "doctorEmailId" : doctor.doctorEmailId
+                }
+            )
+        for doctor in data:
+            if 'doctorSpecializationProof' in doctor:
+                doctor['doctorSpecializationProof'] = base64.b64encode(doctor['doctorSpecializationProof']).decode('utf-8')
+        return data
+    else:
+        data=[{"data":None}]
+        return data
 
 def get_total_doctor():
     total_doctors=DoctorTable.query.count()
@@ -69,17 +73,21 @@ def insert_admin(adminName, adminPhoneNumber, adminAddress, emailId):
 
 def fetch_admin_records():
     admininfo=AdminTable.query.all()
-    data=[]
-    for admin in admininfo:
-        data.append(
-            {
-                "adminName" :admin.adminName,
-                "adminPhoneNumber" : admin.adminPhoneNumber,
-                "adminAddress" : admin.adminAddress,
-                "emailId" : admin.emailId
-            }
-        )
-    return data
+    if admininfo:
+        data=[]
+        for admin in admininfo:
+            data.append(
+                {
+                    "adminName" :admin.adminName,
+                    "adminPhoneNumber" : admin.adminPhoneNumber,
+                    "adminAddress" : admin.adminAddress,
+                    "emailId" : admin.emailId
+                }
+            )
+        return data
+    else:
+        data=[{"data":None}]
+        return data
 
 
 def get_total_admin():
@@ -91,6 +99,8 @@ def findDoctorId(doctorEmailId):
     if found_doctor:
         doctorId = found_doctor.doctorId
         return doctorId
+    else:
+        return None
 
 
 def insert_slot(doctorEmailId, slotStartTime, slotStatus,slotEndTime):

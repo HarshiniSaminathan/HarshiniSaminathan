@@ -1,6 +1,7 @@
 from flask import Blueprint
 
-from app.service.patientService import (register_New_Patient,view_prescription,add_Feedback,get_All_Prescription,
+from app.controller.patientController import check_for_PMR_beforeDay
+from app.service.patientService import (register_New_Patient,view_prescription,add_Feedback,get_All_Prescription,upload_PMReport,
                                         get_Available_Doctors,add_PMReports,Check_Slot_Availability_Doctor,get_By_DoctorSpecialization,profile_upadte,get_slotsfor_doctor,requesting_for_appointment,get_patient_appointments,count_appointments)
 
 patientapi_blueprint = Blueprint('patientapi', __name__, url_prefix='/api/patient')
@@ -9,7 +10,7 @@ patientapi_blueprint = Blueprint('patientapi', __name__, url_prefix='/api/patien
 def registerNewPatient():
     return register_New_Patient()
 
-@patientapi_blueprint.route("getAvailableDcotors")
+@patientapi_blueprint.route("getAvailableDcotors",methods=['GET'])
 def getAvailableDoctors():
     return get_Available_Doctors()
 
@@ -41,9 +42,13 @@ def getDoctorsByDoctorSpecialization():
 def CheckSlotAvailabilityForDoctor():
     return Check_Slot_Availability_Doctor()
 
-@patientapi_blueprint.route("/addPMReports",methods=['POST'])
+@patientapi_blueprint.route("/addPMReports",methods=['POST']) # done before FILE UPLOADING API (BLOB FORMAT)
 def addPMReports():
     return add_PMReports()
+
+@patientapi_blueprint.route("uploadPMReport",methods=['POST'])
+def uploadPMReport():
+    return upload_PMReport()
 
 @patientapi_blueprint.route("/viewPrescription",methods=['GET'])
 def viewPrescription():
@@ -56,3 +61,8 @@ def addFeedback():
 @patientapi_blueprint.route("getAllPrescription",methods=['GET'])
 def getAllPrescription():
     return get_All_Prescription()
+
+@patientapi_blueprint.route("automatedEmailSender",methods=['GET'])
+def automatedEmailSender():
+    return check_for_PMR_beforeDay()
+

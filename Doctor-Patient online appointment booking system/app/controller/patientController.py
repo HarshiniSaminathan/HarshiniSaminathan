@@ -10,7 +10,7 @@ from app.models.doctorModel import DoctorTable
 from app.models.patientModel import PatientTable
 from app.models.slotModel import slotTable
 from app.models.userModel import db, UserTable
-from app.models.medicalRecordsModel import MedicalRecordsTable
+from app.models.medicalRecordsModel import MedicalRecordsTable, PMRecordTable
 from app.utils.commanUtils import add_in_entity, update_in_entity
 from app.models.appointmentModel import appointmentTable
 from app.models.prescriptionModel import PrescriptionTable
@@ -34,17 +34,20 @@ def insert_patient(patientFirstName,patientLastName, patientPhoneNumber,patientD
 def fetch_Availabledoctor_records():
     doctorinfo=DoctorTable.query.all()
     data=[]
-    for doctor in doctorinfo:
-        data.append(
-            {
-                "doctorName": doctor.doctorName,
-                "doctorPhoneNumber": doctor.doctorPhoneNumber,
-                "doctorExperience":doctor.doctorExperience,
-                "doctorSpecialization" : doctor.doctorSpecialization,
-                "doctorEmailId" : doctor.doctorEmailId
-            }
-        )
-    return data
+    if doctorinfo:
+        for doctor in doctorinfo:
+            data.append(
+                {
+                    "doctorName": doctor.doctorName,
+                    "doctorPhoneNumber": doctor.doctorPhoneNumber,
+                    "doctorExperience":doctor.doctorExperience,
+                    "doctorSpecialization" : doctor.doctorSpecialization,
+                    "doctorEmailId" : doctor.doctorEmailId
+                }
+            )
+        return data
+    else:
+        return [{"data": None}]
 
 
 def updateProfile(patientFirstName,patientLastName, patientPhoneNumber,patientDOB,patientAddress,patientEmailId):
@@ -209,17 +212,20 @@ def patient_appointments(patientEmailId):
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
         .all()
     )
-    result = [
-        {
-            "doctorName": doctorName,
-            "doctorSpecialization": doctorSpecialization,
-            "doctorExperience": doctorExperience,
-            "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
-            "appointmentTime": appointment_time.strftime('%H:%M')
-        }
-        for doctorName, doctorSpecialization, doctorExperience, appointment_date, appointment_time in appointments
-    ]
-    return result
+    if appointments:
+        result = [
+            {
+                "doctorName": doctorName,
+                "doctorSpecialization": doctorSpecialization,
+                "doctorExperience": doctorExperience,
+                "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+                "appointmentTime": appointment_time.strftime('%H:%M')
+            }
+            for doctorName, doctorSpecialization, doctorExperience, appointment_date, appointment_time in appointments
+        ]
+        return result
+    else:
+        return [{"data": None}]
 
 
 def countOfAppointmentsPerDay(patientEmailId):
@@ -272,6 +278,8 @@ def doctor_for_Specialization(doctorSpecialization):
 
                 })
         return data
+    else:
+        return [{"data": None}]
 
 def check_for_slotsPending(doctorEmailId,appointmentDate):
     doctorId=findDoctorId(doctorEmailId)
@@ -284,14 +292,17 @@ def check_for_slotsPending(doctorEmailId,appointmentDate):
         )
         .all()
     )
-    data=[]
-    for slots in pending_and_rejected_slots:
-        data.append(
-            {
-                "appointmentTime": slots.appointmentTime.strftime('%H:%M')
-            }
-        )
-    return data
+    if pending_and_rejected_slots:
+        data=[]
+        for slots in pending_and_rejected_slots:
+            data.append(
+                {
+                    "appointmentTime": slots.appointmentTime.strftime('%H:%M')
+                }
+            )
+        return data
+    else:
+        return [{"data": None}]
 
 
 def check_for_slotsRejected(doctorEmailId,appointmentDate):
@@ -306,41 +317,48 @@ def check_for_slotsRejected(doctorEmailId,appointmentDate):
         .all()
     )
     data=[]
-    for slots in pending_and_rejected_slots:
-        data.append(
-            {
-                "appointmentTime": slots.appointmentTime.strftime('%H:%M')
-            }
-        )
-    return data
+    if pending_and_rejected_slots:
+        for slots in pending_and_rejected_slots:
+            data.append(
+                {
+                    "appointmentTime": slots.appointmentTime.strftime('%H:%M')
+                }
+            )
+        return data
+    else:
+        return [{"data": None}]
 
 
 def check_for_slotsNotRequested(doctorEmailId,appointmentDate):
     doctorId = findDoctorId(doctorEmailId)
     slottiming=slotTable.query.filter_by(doctorId=doctorId)
     data=[]
-    for timimg in slottiming:
-        slotStartTime=timimg.slotStartTime.strftime('%H:%M')
-        data.append(slotStartTime)
-    print("slots in slot table",data)
-    Timeforappointment=appointmentTable.query.filter_by(doctorId=doctorId,appointmentDate=appointmentDate)
+    if slottiming:
+        for timimg in slottiming:
+            slotStartTime=timimg.slotStartTime.strftime('%H:%M')
+            data.append(slotStartTime)
+        print("slots in slot table",data)
+        Timeforappointment=appointmentTable.query.filter_by(doctorId=doctorId,appointmentDate=appointmentDate)
 
-    TimeInappointment=[]
+        TimeInappointment=[]
+        if Timeforappointment:
+            for time in Timeforappointment:
+                appointmenttime=time.appointmentTime.strftime('%H:%M')
+                TimeInappointment.append(appointmenttime)
 
-    for time in Timeforappointment:
-        appointmenttime=time.appointmentTime.strftime('%H:%M')
-        TimeInappointment.append(appointmenttime)
-
-    print("appoinmenttime in appointment table",TimeInappointment)
-    not_requested=[]
-    for slottime in data:
-        if slottime not in TimeInappointment:
-            not_requested.append({
-                    "appointmentTime":slottime
-                })
-    print("not requested appointment",not_requested)
-    return not_requested
-
+            print("appoinmenttime in appointment table",TimeInappointment)
+            not_requested=[]
+            for slottime in data:
+                if slottime not in TimeInappointment:
+                    not_requested.append({
+                            "appointmentTime":slottime
+                        })
+            print("not requested appointment",not_requested)
+            return not_requested
+        else:
+            return [{"data": None}]
+    else:
+        return [{"data": None}]
 
 def check_appointmentAccepted(doctorEmailId,patientEmailId,appointmentDate,appointmentTime):
     appointmentStatus="ACCEPTED"
@@ -376,20 +394,35 @@ def addPMReport(appointmentId,PMReport,description):
     )
     add_in_entity(new_report)
 
+def add_filePMReport(appointmentId,filename,description):
+    current_time = datetime.now().strftime('%H:%M')
+    current_date = datetime.now().strftime('%Y-%m-%d')
+    new_report=PMRecordTable(
+        appointmentId=appointmentId,
+        PMReport=filename,
+        description=description,
+        createdDate=current_date,
+        createdTime=current_time
+    )
+    add_in_entity(new_report)
+
 
 def prescription_datas(appointmentId):
     prescriptions=PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
     data=[]
-    for datas in prescriptions:
-        data.append(
-            {
-                "medication":datas.medication,
-                "dosage":datas.dosage,
-                "instruction":datas.instruction,
-                "createdDate":datas.createdDate.strftime('%Y-%m-%d'),
-                "createdTime":datas.createdTime.strftime('%H:%M')
-            })
-    return data
+    if prescriptions:
+        for datas in prescriptions:
+            data.append(
+                {
+                    "medication":datas.medication,
+                    "dosage":datas.dosage,
+                    "instruction":datas.instruction,
+                    "createdDate":datas.createdDate.strftime('%Y-%m-%d'),
+                    "createdTime":datas.createdTime.strftime('%H:%M')
+                })
+        return data
+    else:
+        return [{"data": None}]
 
 def add_Feedback_To_Doctor(patientEmailId,doctorEmailId,feedbackText,rating):
     patientId=findPatientId(patientEmailId)
@@ -438,56 +471,78 @@ def get_Prescription(patientEmailId, doctorEmailId):
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
         .all()
     )
+    if appointments:
+        result = []
+        for doctorName, doctorSpecialization, doctorEmailId, appointment_date, appointment_time in appointments:
+            appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointment_date, appointment_time)
+            prescription_records = PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
 
-    result = []
-    for doctorName, doctorSpecialization, doctorEmailId, appointment_date, appointment_time in appointments:
-        appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointment_date, appointment_time)
-        prescription_records = PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
+            prescription_for_appointment = []
+            if prescription_records:
+                for medical_record in prescription_records:
+                    medication = medical_record.medication
+                    dosage=medical_record.dosage
+                    instruction = medical_record.dosage
 
-        prescription_for_appointment = []
-        for medical_record in prescription_records:
-            medication = medical_record.medication
-            dosage=medical_record.dosage
-            instruction = medical_record.dosage
+                    prescription_for_appointment.append({
+                        "medication": medication,
+                        "dosage":dosage,
+                        "instruction":instruction
+                    })
 
-            prescription_for_appointment.append({
-                "medication": medication,
-                "dosage":dosage,
-                "instruction":instruction
-            })
-
-        result.append({
-            "doctorName": doctorName,
-            "doctorEmailId": doctorEmailId,
-            "doctorSpecialization": doctorSpecialization,
-            "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
-            "appointmentTime": appointment_time.strftime('%H:%M'),
-            "medicalRecords": prescription_for_appointment
-        })
-    return result
-def check_for_PMR_beforeDay():
-    from app.utils.emailSender import send_email
-    today = datetime.now()
-    tomorrow = today + timedelta(days=1)
-    dateOfTomorrow = tomorrow.date()
-    appoinmtmentIds = MedicalRecordsTable.query.filter_by(appointmentDate=dateOfTomorrow).all()
-    if appoinmtmentIds:
-        patient_email_ids = []
-
-        for record in appoinmtmentIds:
-            appointment_id = record.appointmentId
-            patient_ids = appointmentTable.query.filter_by(appoinmtmentId=appointment_id).all()
-            for appointment in patient_ids:
-                patient_id = appointment.PatientId
-                patient_email = PatientTable.query.filter_by(patientId=patient_id).first()
-                if patient_email:
-                    patient_email_ids.append(patient_email.patientEmailId)
-        for email_id in patient_email_ids:
-            send_email(email_id)
-            print(email_id)
-        print('Emails sent to patients.')
+                result.append({
+                    "doctorName": doctorName,
+                    "doctorEmailId": doctorEmailId,
+                    "doctorSpecialization": doctorSpecialization,
+                    "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+                    "appointmentTime": appointment_time.strftime('%H:%M'),
+                    "medicalRecords": prescription_for_appointment
+                })
+                return result
+            else:
+                return [{"data": None}]
     else:
-        return False
+        return [{"data": None}]
+
+def check_for_PMR_beforeDay():
+    try:
+        today = datetime.now()
+        tomorrow = today + timedelta(days=1)
+        date_of_tomorrow = tomorrow.date()
+
+        appointments = (
+            appointmentTable.query
+            .filter_by(appointmentDate=date_of_tomorrow)
+            .all()
+        )
+        if appointments:
+            patient_email_ids = []
+            for record in appointments:
+                appointment_id = record.appointmentId
+                checkInPMRtable=PMRecordTable.query.filter_by(appointmentId=appointment_id).all()
+                if not checkInPMRtable:
+                    patient_ids = appointmentTable.query.filter_by(appointmentId=appointment_id).all()
+                    for appointment in patient_ids:
+                        patient_id = appointment.patientId
+                        patient_email = PatientTable.query.filter_by(patientId=patient_id).first()
+                        if patient_email:
+                            patient_email_ids.append(patient_email.patientEmailId)
+            for email_id in patient_email_ids:
+                from app.utils.emailSender import send_email
+                send_email(email_id)
+                return jsonify({'message':  f'{email_id}'})
+
+            return jsonify({'message': 'All PMR reports are added for tomorrow'})
+
+        else:
+            return jsonify({'message': 'No appointments for tomorrow'})
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'message': f'{e}'})
+
+
+
 
 
 
