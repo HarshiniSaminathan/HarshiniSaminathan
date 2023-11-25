@@ -38,12 +38,15 @@ def responding_for_appointment(doctorEmailId):
 
 
 def get_doctor_appointments(doctorEmailId):
-    total_appointments=doctor_appointments(doctorEmailId)
-    return success_response({"data":total_appointments})
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
+    total_appointments,total_pages=doctor_appointments(doctorEmailId,page,per_page)
+    return success_response({"data":total_appointments,"Pagination":total_pages})
 
 def count_appointments(doctorEmailId):
-    count_appointments_result = countOfAppointmentsPerDay(doctorEmailId)
-
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
+    count_appointments_result,total_page= countOfAppointmentsPerDay(doctorEmailId,page,per_page)
     result = [
         {
             "date": appointment['date'],
@@ -51,8 +54,7 @@ def count_appointments(doctorEmailId):
         }
         for appointment in count_appointments_result
     ]
-
-    return success_response({"Appointments-Count-With-DATE": result})
+    return success_response({"Appointments-Count-With-DATE": result,"Pagination":total_page})
 
 def add_Prescription():
     data=request.get_json()
@@ -102,6 +104,8 @@ def response_For_Feedback_():
 
 
 def get_All_Feedbacks():
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
     data=request.get_json()
     required_fields = ['doctorEmailId']
     for field in required_fields:
@@ -109,11 +113,13 @@ def get_All_Feedbacks():
             return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
     doctorEmailId = data['doctorEmailId']
     if check_email_existence(doctorEmailId):
-        feedbacks=get_feedbacks(doctorEmailId)
-        return success_response({"data":feedbacks})
+        feedbacks,total_recors=get_feedbacks(doctorEmailId,page,per_page)
+        return success_response({"data":feedbacks,"Pagination":total_recors})
     return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
 
 def get_All_PMReports():
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
     data = request.get_json()
     required_fields = ['patientEmailId','doctorEmailId']
     for field in required_fields:
@@ -123,8 +129,8 @@ def get_All_PMReports():
     doctorEmailId=data['doctorEmailId']
     if check_email_existence(patientEmailId):
         if check_email_existence(doctorEmailId):
-            reports=get_patient_PMReports(patientEmailId,doctorEmailId)
-            return success_response({"data": reports})
+            reports,total_page=get_patient_PMReports(patientEmailId,doctorEmailId,page,per_page)
+            return success_response({"data": reports,"Pagination":total_page})
         return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
     return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
 

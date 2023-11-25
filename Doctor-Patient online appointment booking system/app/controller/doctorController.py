@@ -42,10 +42,10 @@ def respondingAppointments(doctorEmailId, appointmentDate, appointmentTime, appo
         print(f"Error: {e}")
         return False
 
-def countOfAppointmentsPerDay(doctorEmailId):
+def countOfAppointmentsPerDay(doctorEmailId, page, per_page):
     doctor_id = findDoctorId(doctorEmailId)
     current_date = datetime.now().date()
-    counts = (
+    counts_query = (
         db.session.query(
             appointmentTable.appointmentDate,
             func.count().label('appointmentCount')
@@ -55,8 +55,9 @@ def countOfAppointmentsPerDay(doctorEmailId):
         .filter(appointmentTable.appointmentDate >= current_date)
         .group_by(appointmentTable.appointmentDate)
         .order_by(appointmentTable.appointmentDate)
-        .all()
     )
+    counts_info = counts_query.paginate(page=page, per_page=per_page)
+    counts = counts_info.items
 
     result = [
         {
@@ -65,13 +66,13 @@ def countOfAppointmentsPerDay(doctorEmailId):
         }
         for appointment_date, appointment_count in counts
     ]
-    return result
+    return result, counts_info.pages
 
-def doctor_appointments(doctorEmailId):
+def doctor_appointments(doctorEmailId, page, per_page):
     doctor_id = findDoctorId(doctorEmailId)
     current_datetime = datetime.now()
     appointment_status = "ACCEPTED"
-    appointments = (
+    appointments_query = (
         db.session.query(
             PatientTable.patientFirstName,
             PatientTable.patientEmailId,
@@ -92,8 +93,10 @@ def doctor_appointments(doctorEmailId):
                         appointmentTable.appointmentTime > current_datetime.time()
                     ))))
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
-        .all()
     )
+
+    appointments_info = appointments_query.paginate(page=page, per_page=per_page)
+    appointments = appointments_info.items
     if appointments:
         result = []
         for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
@@ -103,12 +106,12 @@ def doctor_appointments(doctorEmailId):
                 records_for_appointment = []
                 for medical_record in medical_records:
                     PMReport = medical_record.PMReport
-                    description=medical_record.description
+                    description = medical_record.description
                     EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
 
                     records_for_appointment.append({
                         "PMReport": EncodedPMReport,
-                        "description":description
+                        "description": description
                     })
 
                 result.append({
@@ -119,11 +122,10 @@ def doctor_appointments(doctorEmailId):
                     "appointmentTime": appointment_time.strftime('%H:%M'),
                     "medicalRecords": records_for_appointment
                 })
-            return result
-        else:
-            return None
+        return result, appointments_info.pages
     else:
         return None
+
 
 def addPrescription(appointmentId, medication, dosage,instruction):
     current_time = datetime.now().strftime('%H:%M')
@@ -153,14 +155,16 @@ def addFeedbackResponse(patientId,feedbackTextForDoctor,rating,feedbackResponse,
         return False
 
 
-def get_feedbacks(doctorEmailId):
+def get_feedbacks(doctorEmailId, page, per_page):
     doctor_id = findDoctorId(doctorEmailId)
-    feedbacks = (
+    feedbacks_query = (
         FeedbackSession.query
         .filter_by(doctorId=doctor_id)
         .options(joinedload(FeedbackSession.patient))
-        .all()
     )
+    feedbacks_info = feedbacks_query.paginate(page=page, per_page=per_page)
+    feedbacks = feedbacks_info.items
+
     if feedbacks:
         data_list = []
         for feedback in feedbacks:
@@ -174,18 +178,19 @@ def get_feedbacks(doctorEmailId):
                 "rating": feedback.rating,
                 "createdDate": feedback.createdDate,
                 "createdTime": feedback.createdTime.strftime('%H:%M'),
-                "feedbackResponse":feedback.feedbackResponse
+                "feedbackResponse": feedback.feedbackResponse
             })
-        return data_list
+        return data_list, feedbacks_info.pages
     else:
         return [{"data": None}]
 
 
-def get_patient_PMReports(patientEmailId,doctorEmailId):
+
+def get_patient_PMReports(patientEmailId, doctorEmailId, page, per_page):
     patient_id = findPatientId(patientEmailId)
-    doctor_id =findDoctorId(doctorEmailId)
+    doctor_id = findDoctorId(doctorEmailId)
     appointment_status = "ACCEPTED"
-    appointments = (
+    appointments_query = (
         db.session.query(
             PatientTable.patientFirstName,
             PatientTable.patientEmailId,
@@ -195,10 +200,16 @@ def get_patient_PMReports(patientEmailId,doctorEmailId):
         )
         .join(appointmentTable)
         .join(UserTable)
-        .filter(appointmentTable.doctorId == doctor_id, appointmentTable.appointmentStatus == appointment_status,appointmentTable.patientId == patient_id)
+        .filter(
+            appointmentTable.doctorId == doctor_id,
+            appointmentTable.appointmentStatus == appointment_status,
+            appointmentTable.patientId == patient_id
+        )
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
-        .all()
     )
+    appointments_info = appointments_query.paginate(page=page, per_page=per_page)
+    appointments = appointments_info.items
+
     if appointments:
         result = []
         for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
@@ -207,15 +218,13 @@ def get_patient_PMReports(patientEmailId,doctorEmailId):
 
             records_for_appointment = []
             for medical_record in medical_records:
-
                 PMReport = medical_record.PMReport
-                description=medical_record.description
-                # EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
+                description = medical_record.description
                 from run import UPLOAD_FOLDER
                 records_for_appointment.append({
                     "PMReport": PMReport,
                     "file_path": os.path.join(UPLOAD_FOLDER, PMReport),
-                    "description":description
+                    "description": description
                 })
 
             result.append({
@@ -226,6 +235,7 @@ def get_patient_PMReports(patientEmailId,doctorEmailId):
                 "appointmentTime": appointment_time.strftime('%H:%M'),
                 "medicalRecords": records_for_appointment
             })
-        return result
+
+        return result, appointments_info.pages
     else:
-        return [{"data":None}]
+        return [{"data": None}]

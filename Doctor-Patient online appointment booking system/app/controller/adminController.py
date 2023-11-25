@@ -32,29 +32,33 @@ def insert_role_password(EmailId,password,role):
     add_in_entity(new_user)
 
 
-def fetch_doctor_records():
-    doctorinfo=DoctorTable.query.all()
-    data=[]
-    if doctorinfo:
-        for doctor in doctorinfo:
-            data.append(
-                {
-                    "doctorName": doctor.doctorName,
-                    "doctorPhoneNumber": doctor.doctorPhoneNumber,
-                    "doctorAddress": doctor.doctorAddress,
-                    "doctorExperience":doctor.doctorExperience,
-                    "doctorSpecialization" : doctor.doctorSpecialization,
-                    "doctorSpecializationProof" :doctor.doctorSpecializationProof,
-                    "doctorEmailId" : doctor.doctorEmailId
-                }
-            )
-        for doctor in data:
-            if 'doctorSpecializationProof' in doctor:
-                doctor['doctorSpecializationProof'] = base64.b64encode(doctor['doctorSpecializationProof']).decode('utf-8')
-        return data
+
+from flask_sqlalchemy import Pagination
+
+def fetch_doctor_records(page, per_page):
+    query = DoctorTable.query
+
+    doctor_info = query.paginate(page=page, per_page=per_page)
+
+    items = doctor_info.items
+    if items:
+        data = []
+        for doctor in items:
+            data.append({
+                "doctorName": doctor.doctorName,
+                "doctorPhoneNumber": doctor.doctorPhoneNumber,
+                "doctorAddress": doctor.doctorAddress,
+                "doctorExperience": doctor.doctorExperience,
+                "doctorSpecialization": doctor.doctorSpecialization,
+                "doctorSpecializationProof": base64.b64encode(doctor.doctorSpecializationProof).decode('utf-8'),
+                "doctorEmailId": doctor.doctorEmailId
+            })
+
+        return data, doctor_info.pages
     else:
-        data=[{"data":None}]
+        data = [{"data": None}]
         return data
+
 
 def get_total_doctor():
     total_doctors=DoctorTable.query.count()
@@ -71,20 +75,21 @@ def insert_admin(adminName, adminPhoneNumber, adminAddress, emailId):
     add_in_entity(new_admin)
 
 
-def fetch_admin_records():
-    admininfo=AdminTable.query.all()
-    if admininfo:
-        data=[]
-        for admin in admininfo:
-            data.append(
-                {
-                    "adminName" :admin.adminName,
-                    "adminPhoneNumber" : admin.adminPhoneNumber,
-                    "adminAddress" : admin.adminAddress,
-                    "emailId" : admin.emailId
-                }
-            )
-        return data
+def fetch_admin_records(page, per_page):
+    query = AdminTable.query
+    admin_info = query.paginate(page=page, per_page=per_page)
+    items = admin_info.items
+    if items:
+        data = []
+        for admin in items:
+            data.append({
+                "adminName": admin.adminName,
+                "adminPhoneNumber": admin.adminPhoneNumber,
+                "adminAddress": admin.adminAddress,
+                "emailId": admin.emailId
+            })
+
+        return data, admin_info.pages
     else:
         data=[{"data":None}]
         return data
@@ -149,31 +154,33 @@ def addFeedbackResponse(patientId,feedbackTextForAdmin,rating,feedbackResponse):
     except Exception as e:
         return False
 
-
-
-
-def get_feedbacks():
-    feedbacks = (
+def get_feedbacks(page, per_page):
+    query = (
         FeedbackSession.query
         .filter(FeedbackSession.feedbackTextForAdmin.isnot(None))
         .options(joinedload(FeedbackSession.patient))
-        .all()
     )
 
-    data_list = []
+    feedbacks_info = query.paginate(page=page, per_page=per_page)
+    feedbacks = feedbacks_info.items
+    if feedbacks:
+        data_list = []
 
-    for feedback in feedbacks:
-        patient = feedback.patient
+        for feedback in feedbacks:
+            patient = feedback.patient
 
-        data_list.append({
-            "patientFirstName": patient.patientFirstName,
-            "patientPhoneNumber": patient.patientPhoneNumber,
-            "patientEmailId": patient.patientEmailId,
-            "feedbacks": feedback.feedbackTextForAdmin,
-            "rating": feedback.rating,
-            "createdDate": feedback.createdDate,
-            "createdTime": feedback.createdTime.strftime('%H:%M'),
-            "feedbackResponse":feedback.feedbackResponse
-        })
+            data_list.append({
+                "patientFirstName": patient.patientFirstName,
+                "patientPhoneNumber": patient.patientPhoneNumber,
+                "patientEmailId": patient.patientEmailId,
+                "feedbacks": feedback.feedbackTextForAdmin,
+                "rating": feedback.rating,
+                "createdDate": feedback.createdDate,
+                "createdTime": feedback.createdTime.strftime('%H:%M'),
+                "feedbackResponse": feedback.feedbackResponse
+            })
 
-    return data_list
+        return data_list, feedbacks_info.pages
+    else:
+        data=[{"data":None}]
+        return data

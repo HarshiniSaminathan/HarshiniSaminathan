@@ -1,4 +1,5 @@
 import base64
+import math
 from datetime import datetime, timedelta
 import datetime
 
@@ -31,23 +32,27 @@ def insert_patient(patientFirstName,patientLastName, patientPhoneNumber,patientD
     )
     add_in_entity(new_patient)
 
-def fetch_Availabledoctor_records():
-    doctorinfo=DoctorTable.query.all()
-    data=[]
-    if doctorinfo:
-        for doctor in doctorinfo:
+def fetch_Availabledoctor_records(page, per_page):
+    doctor_query = DoctorTable.query
+    doctor_info_paginated = doctor_query.paginate(page=page, per_page=per_page)
+    doctor_info = doctor_info_paginated.items
+    data = []
+    if doctor_info:
+        for doctor in doctor_info:
             data.append(
                 {
                     "doctorName": doctor.doctorName,
                     "doctorPhoneNumber": doctor.doctorPhoneNumber,
-                    "doctorExperience":doctor.doctorExperience,
-                    "doctorSpecialization" : doctor.doctorSpecialization,
-                    "doctorEmailId" : doctor.doctorEmailId
+                    "doctorExperience": doctor.doctorExperience,
+                    "doctorSpecialization": doctor.doctorSpecialization,
+                    "doctorEmailId": doctor.doctorEmailId
                 }
             )
-        return data
+
+        return data, doctor_info_paginated.pages
     else:
         return [{"data": None}]
+
 
 
 def updateProfile(patientFirstName,patientLastName, patientPhoneNumber,patientDOB,patientAddress,patientEmailId):
@@ -150,7 +155,7 @@ def alreadyRequestedForSameDateTime(doctorEmailId,appointmentDate,appointmentTim
     else:
         return True
 
-def fetch_slotsfor_doctor(doctorEmailId):
+def fetch_slotsfor_doctor(doctorEmailId,):
     doctorId = findDoctorId(doctorEmailId)
     if doctorId is None:
         return {"error": "Doctor not found"}
@@ -182,11 +187,14 @@ def fetch_slotsfor_doctor(doctorEmailId):
     return data
 
 
-def patient_appointments(patientEmailId):
+from sqlalchemy import func
+
+def patient_appointments(patientEmailId, page, per_page):
     patient_id = findPatientId(patientEmailId)
     current_datetime = datetime.now()
-    appointment_status="ACCEPTED"
-    appointments = (
+    appointment_status = "ACCEPTED"
+
+    query = (
         db.session.query(
             DoctorTable.doctorName,
             DoctorTable.doctorSpecialization,
@@ -196,7 +204,7 @@ def patient_appointments(patientEmailId):
         )
         .join(appointmentTable)
         .join(UserTable)
-        .filter(appointmentTable.patientId == patient_id,appointmentTable.appointmentStatus==appointment_status)
+        .filter(appointmentTable.patientId == patient_id, appointmentTable.appointmentStatus == appointment_status)
         .filter(
             and_(
                 appointmentTable.appointmentDate > current_datetime.date(),
@@ -210,8 +218,12 @@ def patient_appointments(patientEmailId):
             )
         )
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
-        .all()
     )
+
+    total_records = query.count()
+
+    appointments = query.offset((page - 1) * per_page).limit(per_page).all()
+
     if appointments:
         result = [
             {
@@ -223,15 +235,17 @@ def patient_appointments(patientEmailId):
             }
             for doctorName, doctorSpecialization, doctorExperience, appointment_date, appointment_time in appointments
         ]
-        return result
+        return result, total_records
     else:
         return [{"data": None}]
 
 
-def countOfAppointmentsPerDay(patientEmailId):
+
+def countOfAppointmentsPerDay(patientEmailId, page, per_page):
     patient_id = findPatientId(patientEmailId)
     current_date = datetime.now().date()
-    counts = (
+
+    query = (
         db.session.query(
             appointmentTable.appointmentDate,
             func.count().label('appointmentCount')
@@ -241,18 +255,23 @@ def countOfAppointmentsPerDay(patientEmailId):
         .filter(appointmentTable.appointmentDate >= current_date)
         .group_by(appointmentTable.appointmentDate)
         .order_by(appointmentTable.appointmentDate)
-        .all()
     )
 
-    result = [
-        {
-            "date": appointment_date.strftime('%Y-%m-%d'),
-            "appointmentCount": appointment_count
-        }
-        for appointment_date, appointment_count in counts
-    ]
+    total_records = query.count()
 
-    return result
+    appointments = query.offset((page - 1) * per_page).limit(per_page).all()
+    if appointments:
+        result = [
+            {
+                "date": appointment_date.strftime('%Y-%m-%d'),
+                "appointmentCount": appointment_count
+            }
+            for appointment_date, appointment_count in appointments
+        ]
+
+        return result, total_records
+    else:
+        return [{"data": None}]
 
 
 def doctorForSpecialization_exists(doctorSpecialization):
@@ -263,21 +282,29 @@ def doctorForSpecialization_exists(doctorSpecialization):
         return False
 
 
-def doctor_for_Specialization(doctorSpecialization):
-    doctors=DoctorTable.query.filter_by(doctorSpecialization=doctorSpecialization).all()
-    data=[]
+def doctor_for_Specialization(doctorSpecialization, page, per_page):
+    doctors = (
+        DoctorTable.query
+        .filter_by(doctorSpecialization=doctorSpecialization)
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
+
+    data = []
     if doctors:
         for doctor in doctors:
             data.append({
+                "doctorName": doctor.doctorName,
+                "doctorPhoneNumber": doctor.doctorPhoneNumber,
+                "doctorExperience": doctor.doctorExperience,
+                "doctorSpecialization": doctor.doctorSpecialization,
+                "doctorEmailId": doctor.doctorEmailId
+            })
 
-            "doctorName": doctor.doctorName,
-            "doctorPhoneNumber": doctor.doctorPhoneNumber,
-            "doctorExperience": doctor.doctorExperience,
-            "doctorSpecialization": doctor.doctorSpecialization,
-            "doctorEmailId": doctor.doctorEmailId
-
-                })
-        return data
+        total_records = DoctorTable.query.filter_by(doctorSpecialization=doctorSpecialization).count()
+        total_pages = math.ceil(total_records / per_page)
+        return data,total_pages
     else:
         return [{"data": None}]
 
@@ -407,22 +434,27 @@ def add_filePMReport(appointmentId,filename,description):
     add_in_entity(new_report)
 
 
-def prescription_datas(appointmentId):
-    prescriptions=PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
-    data=[]
-    if prescriptions:
-        for datas in prescriptions:
+def prescription_datas(appointmentId, page, per_page):
+    query = PrescriptionTable.query.filter_by(appointmentId=appointmentId)
+    prescription_info = query.paginate(page=page, per_page=per_page)
+    items = prescription_info.items
+    if items:
+        data = []
+        for datas in items:
             data.append(
                 {
-                    "medication":datas.medication,
-                    "dosage":datas.dosage,
-                    "instruction":datas.instruction,
-                    "createdDate":datas.createdDate.strftime('%Y-%m-%d'),
-                    "createdTime":datas.createdTime.strftime('%H:%M')
-                })
-        return data
+                    "medication": datas.medication,
+                    "dosage": datas.dosage,
+                    "instruction": datas.instruction,
+                    "createdDate": datas.createdDate.strftime('%Y-%m-%d'),
+                    "createdTime": datas.createdTime.strftime('%H:%M')
+                }
+            )
+        total_pages = prescription_info.pages
+
+        return data,total_pages
     else:
-        return [{"data": None}]
+        return {"data": [{"data": None}], "total_pages": 0}
 
 def add_Feedback_To_Doctor(patientEmailId,doctorEmailId,feedbackText,rating):
     patientId=findPatientId(patientEmailId)
@@ -453,11 +485,11 @@ def add_Feedback_To_Admin(patientEmailId, feedbackText, rating):
     add_in_entity(new_feedback)
 
 
-def get_Prescription(patientEmailId, doctorEmailId):
+def get_Prescription(patientEmailId, doctorEmailId, page, per_page):
     patient_id = findPatientId(patientEmailId)
-    doctor_id =findDoctorId(doctorEmailId)
+    doctor_id = findDoctorId(doctorEmailId)
     appointment_status = "ACCEPTED"
-    appointments = (
+    appointments_query = (
         db.session.query(
             DoctorTable.doctorName,
             DoctorTable.doctorSpecialization,
@@ -467,13 +499,16 @@ def get_Prescription(patientEmailId, doctorEmailId):
         )
         .join(appointmentTable)
         .join(UserTable)
-        .filter(appointmentTable.doctorId == doctor_id, appointmentTable.appointmentStatus == appointment_status,appointmentTable.patientId == patient_id)
+        .filter(appointmentTable.doctorId == doctor_id, appointmentTable.appointmentStatus == appointment_status, appointmentTable.patientId == patient_id)
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
-        .all()
     )
-    if appointments:
+
+    appointments = appointments_query.paginate(page=page, per_page=per_page)
+
+    items = appointments.items
+    if items:
         result = []
-        for doctorName, doctorSpecialization, doctorEmailId, appointment_date, appointment_time in appointments:
+        for doctorName, doctorSpecialization, doctorEmailId, appointment_date, appointment_time in items:
             appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointment_date, appointment_time)
             prescription_records = PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
 
@@ -481,13 +516,13 @@ def get_Prescription(patientEmailId, doctorEmailId):
             if prescription_records:
                 for medical_record in prescription_records:
                     medication = medical_record.medication
-                    dosage=medical_record.dosage
+                    dosage = medical_record.dosage
                     instruction = medical_record.dosage
 
                     prescription_for_appointment.append({
                         "medication": medication,
-                        "dosage":dosage,
-                        "instruction":instruction
+                        "dosage": dosage,
+                        "instruction": instruction
                     })
 
                 result.append({
@@ -498,11 +533,12 @@ def get_Prescription(patientEmailId, doctorEmailId):
                     "appointmentTime": appointment_time.strftime('%H:%M'),
                     "medicalRecords": prescription_for_appointment
                 })
-                return result
-            else:
-                return [{"data": None}]
+
+        total_pages = appointments.pages
+
+        return result,total_pages
     else:
-        return [{"data": None}]
+        return {"data": [{"data": None}], "total_pages": 0}
 
 def check_for_PMR_beforeDay():
     try:

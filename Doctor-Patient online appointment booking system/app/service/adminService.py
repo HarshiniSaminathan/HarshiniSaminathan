@@ -7,6 +7,7 @@ from app.controller.userController import check_email_existence
 from app.controller.adminController import (insert_doctor,insert_role_password,updateSlots,fetch_doctor_records,addFeedbackResponse,get_feedbacks,
                                             get_total_doctor,insert_admin,fetch_admin_records,get_total_admin,insert_slot,check_slot_inserted)
 
+
 def register_doctor():
     try:
         data = request.get_json()
@@ -44,9 +45,11 @@ def register_doctor():
 
 
 def get_Register_Doctor_Records():
-    data= fetch_doctor_records()
-    total_doctors= get_total_doctor()
-    return success_response({'data': data, 'Doctor-Total-Count': str(total_doctors)})
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
+    doctor_info, total_pages = fetch_doctor_records(page, per_page)
+    total_doctors = get_total_doctor()
+    return success_response({'data': doctor_info, 'Doctor-Total-Count': str(total_doctors), 'Pagination': str(total_pages)})
 
 
 def register_Admin():
@@ -75,9 +78,11 @@ def register_Admin():
 
 
 def get_Register_Admin_Records():
-    data = fetch_admin_records()
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
+    data,total_pages = fetch_admin_records(page,per_page)
     total_admin = get_total_admin()
-    return success_response({'data': data, 'Admin-Total-Count': str(total_admin)})
+    return success_response({'data': data, 'Admin-Total-Count': str(total_admin),'Pagination':total_pages})
 
 
 def add_Slot_To_Doctors():
@@ -142,10 +147,12 @@ def response_For_Feedback():
 
 
 def get_All_Feedback():
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
     try:
-        datas=get_feedbacks()
+        datas,total_page=get_feedbacks(page,per_page)
         if datas:
-            return success_response({"data":datas})
+            return success_response({"data":datas,"Pagination":total_page})
         else:
             return success_response({"data":None})
     except Exception as e:

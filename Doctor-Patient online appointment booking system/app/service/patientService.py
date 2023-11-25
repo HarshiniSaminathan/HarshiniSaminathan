@@ -49,8 +49,10 @@ def register_New_Patient():
 
 
 def get_Available_Doctors():
-    data= fetch_Availabledoctor_records()
-    return success_response({'data': data})
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
+    data,total_page= fetch_Availabledoctor_records(page,per_page)
+    return success_response({'data': data,'Pagination':total_page})
 
 
 def profile_upadte(patientEmailId):
@@ -72,8 +74,10 @@ def profile_upadte(patientEmailId):
 
 
 def get_slotsfor_doctor(doctorEmailId):
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
     if check_email_existence(doctorEmailId):
-        data = fetch_slotsfor_doctor(doctorEmailId)
+        data= fetch_slotsfor_doctor(doctorEmailId)
         return success_response({'data': data})
     return failure_response(statuscode='409', content='Email id does exists')
 
@@ -109,12 +113,16 @@ def requesting_for_appointment(patientEmailId):
 
 
 def get_patient_appointments(patientEmailId):
-    total_appointments=patient_appointments(patientEmailId)
-    return success_response({"data":total_appointments})
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
+    total_appointments,total_records=patient_appointments(patientEmailId,page,per_page)
+    return success_response({"data":total_appointments,'Pagination':total_records})
 
 
 def count_appointments(patientEmailId):
-    count_appointments_result = countOfAppointmentsPerDay(patientEmailId)
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
+    count_appointments_result,total_page = countOfAppointmentsPerDay(patientEmailId,page,per_page)
 
     result = [
         {
@@ -124,10 +132,12 @@ def count_appointments(patientEmailId):
         for appointment in count_appointments_result
     ]
 
-    return success_response({"Appointments-Count-With-DATE": result})
+    return success_response({"Appointments-Count-With-DATE": result,'Pagination':total_page})
 
 
 def get_By_DoctorSpecialization():
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
     try:
         data=request.get_json()
         required_fields = ['doctorSpecialization']
@@ -137,8 +147,8 @@ def get_By_DoctorSpecialization():
         doctorSpecialization = data['doctorSpecialization']
         doctorSpecialization1=doctorSpecialization.upper()
         if doctorForSpecialization_exists(doctorSpecialization):
-            result=doctor_for_Specialization(doctorSpecialization)
-            return success_response({f'data: {doctorSpecialization1}': result})
+            result,total_page=doctor_for_Specialization(doctorSpecialization,page,per_page)
+            return success_response({f'data: {doctorSpecialization1}': result,'Pagination':total_page})
         return failure_response(statuscode='409', content=f'Doctor not available for {doctorSpecialization1}')
     except Exception as e:
         print(f"Error: {e}")
@@ -234,6 +244,8 @@ def upload_PMReport():
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 def view_prescription():
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
     data = request.get_json()
     doctorEmailId = data['doctorEmailId']
     patientEmailId = data['patientEmailId']
@@ -244,8 +256,8 @@ def view_prescription():
             if check_appointmentAccepted(doctorEmailId, patientEmailId, appointmentDate, appointmentTime):
                 appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointmentDate,
                                                   appointmentTime)
-                prescriptiondatas = prescription_datas(appointmentId)
-                return success_response({"datas":prescriptiondatas})
+                prescriptiondatas,total_pages = prescription_datas(appointmentId,page,per_page)
+                return success_response({"datas":prescriptiondatas,'Pagination':total_pages})
             return failure_response(statuscode='409', content=f'No appointments on DATE:{appointmentDate} TIME:{appointmentTime}')
         return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
     return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
@@ -278,6 +290,8 @@ def add_Feedback():
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 def get_All_Prescription():
+    page = request.args.get('page', default=1, type=int)
+    per_page = request.args.get('per_page', default=2, type=int)
     data = request.get_json()
     required_fields = ['patientEmailId', 'doctorEmailId']
     for field in required_fields:
@@ -287,8 +301,8 @@ def get_All_Prescription():
     doctorEmailId = data['doctorEmailId']
     if check_email_existence(patientEmailId):
         if check_email_existence(doctorEmailId):
-            reports = get_Prescription(patientEmailId, doctorEmailId)
-            return success_response({"data": reports})
+            reports,total_page = get_Prescription(patientEmailId, doctorEmailId,page,per_page)
+            return success_response({"data": reports,"Pagination":total_page})
         return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
     return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
 

@@ -18,3 +18,5 @@ def delete_in_entity(entity):  # To delete the datas in the entity
     db.session.delete(entity)
     db.session.commit()
 
+
+
