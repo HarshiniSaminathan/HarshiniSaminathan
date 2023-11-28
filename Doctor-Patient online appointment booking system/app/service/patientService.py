@@ -49,37 +49,51 @@ def register_New_Patient():
 
 
 def get_Available_Doctors():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    data,total_page= fetch_Availabledoctor_records(page,per_page)
-    return success_response({'data': data,'Pagination':total_page})
+    try:
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        data,total_page= fetch_Availabledoctor_records(int(page_header),int(per_page_header))
+        return success_response({'data': data,'Pagination':total_page})
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def profile_upadte(patientEmailId):
-    if check_email_existence(patientEmailId):
-        try:
-            data=request.get_json()
-            patientFirstName = data['patientFirstName']
-            patientLastName = data['patientLastName']
-            patientPhoneNumber = data['patientPhoneNumber']
-            patientDOB=data['patientDOB']
-            patientAddress=data['patientAddress']
-            updateProfile(patientFirstName,patientLastName, patientPhoneNumber,patientDOB,patientAddress,patientEmailId)
-            return success_response('patient updated successfully')
-        except Exception as e:
-            print(f"Error: {e}")
-            return failure_response(statuscode='500', content=str(e))
-    else:
-        return failure_response(statuscode='500',content='Emailid Does Not Exists')
+    try:
+        if check_email_existence(patientEmailId):
+            try:
+                data=request.get_json()
+                patientFirstName = data['patientFirstName']
+                patientLastName = data['patientLastName']
+                patientPhoneNumber = data['patientPhoneNumber']
+                patientDOB=data['patientDOB']
+                patientAddress=data['patientAddress']
+                updateProfile(patientFirstName,patientLastName, patientPhoneNumber,patientDOB,patientAddress,patientEmailId)
+                return success_response('patient updated successfully')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=str(e))
+        else:
+            return failure_response(statuscode='500',content='Emailid Does Not Exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def get_slotsfor_doctor(doctorEmailId):
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    if check_email_existence(doctorEmailId):
-        data= fetch_slotsfor_doctor(doctorEmailId)
-        return success_response({'data': data})
-    return failure_response(statuscode='409', content='Email id does exists')
+    try:
+        if check_email_existence(doctorEmailId):
+            data= fetch_slotsfor_doctor(doctorEmailId)
+            return success_response({'data': data})
+        return failure_response(statuscode='409', content='Email id does exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def requesting_for_appointment(patientEmailId):
@@ -113,43 +127,68 @@ def requesting_for_appointment(patientEmailId):
 
 
 def get_patient_appointments(patientEmailId):
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    total_appointments,total_records=patient_appointments(patientEmailId,page,per_page)
-    return success_response({"data":total_appointments,'Pagination':total_records})
-
+    try:
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        if check_email_existence(patientEmailId):
+            total_appointments,total_records=patient_appointments(patientEmailId,int(page_header),int(per_page_header))
+            return success_response({"data":total_appointments,'Pagination':total_records})
+        return failure_response(statuscode='409', content=f'Email id :{patientEmailId} does not exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 def count_appointments(patientEmailId):
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    count_appointments_result,total_page = countOfAppointmentsPerDay(patientEmailId,page,per_page)
+    try:
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        count_appointments_result,total_page = countOfAppointmentsPerDay(patientEmailId,int(page_header),int(per_page_header))
 
-    result = [
-        {
-            "date": appointment['date'],
-            "appointmentCount": appointment['appointmentCount']
-        }
-        for appointment in count_appointments_result
-    ]
+        result = [
+            {
+                "date": appointment['date'],
+                "appointmentCount": appointment['appointmentCount']
+            }
+            for appointment in count_appointments_result
+        ]
 
-    return success_response({"Appointments-Count-With-DATE": result,'Pagination':total_page})
+        return success_response({"Appointments-Count-With-DATE": result,'Pagination':total_page})
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def get_By_DoctorSpecialization():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
     try:
-        data=request.get_json()
-        required_fields = ['doctorSpecialization']
-        for field in required_fields:
-            if field not in data or not data[field]:
-                return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
-        doctorSpecialization = data['doctorSpecialization']
-        doctorSpecialization1=doctorSpecialization.upper()
-        if doctorForSpecialization_exists(doctorSpecialization):
-            result,total_page=doctor_for_Specialization(doctorSpecialization,page,per_page)
-            return success_response({f'data: {doctorSpecialization1}': result,'Pagination':total_page})
-        return failure_response(statuscode='409', content=f'Doctor not available for {doctorSpecialization1}')
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        try:
+            data=request.get_json()
+            required_fields = ['doctorSpecialization']
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+            doctorSpecialization = data['doctorSpecialization']
+            doctorSpecialization1=doctorSpecialization.upper()
+            if doctorForSpecialization_exists(doctorSpecialization):
+                result,total_page=doctor_for_Specialization(doctorSpecialization,int(page_header),int(per_page_header))
+                return success_response({f'data: {doctorSpecialization1}': result,'Pagination':total_page})
+            return failure_response(statuscode='409', content=f'Doctor not available for {doctorSpecialization1}')
+        except Exception as e:
+            print(f"Error: {e}")
+            return failure_response(statuscode='500', content='An unexpected error occurred.')
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
@@ -244,23 +283,31 @@ def upload_PMReport():
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 def view_prescription():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    data = request.get_json()
-    doctorEmailId = data['doctorEmailId']
-    patientEmailId = data['patientEmailId']
-    appointmentDate = data['appointmentDate']
-    appointmentTime = data['appointmentTime']
-    if check_email_existence(doctorEmailId):
-        if check_email_existence(patientEmailId):
-            if check_appointmentAccepted(doctorEmailId, patientEmailId, appointmentDate, appointmentTime):
-                appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointmentDate,
-                                                  appointmentTime)
-                prescriptiondatas,total_pages = prescription_datas(appointmentId,page,per_page)
-                return success_response({"datas":prescriptiondatas,'Pagination':total_pages})
-            return failure_response(statuscode='409', content=f'No appointments on DATE:{appointmentDate} TIME:{appointmentTime}')
-        return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
-    return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
+    try:
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        data = request.get_json()
+        doctorEmailId = data['doctorEmailId']
+        patientEmailId = data['patientEmailId']
+        appointmentDate = data['appointmentDate']
+        appointmentTime = data['appointmentTime']
+        if check_email_existence(doctorEmailId):
+            if check_email_existence(patientEmailId):
+                if check_appointmentAccepted(doctorEmailId, patientEmailId, appointmentDate, appointmentTime):
+                    appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointmentDate,
+                                                      appointmentTime)
+                    prescriptiondatas,total_pages = prescription_datas(appointmentId,int(page_header),int(per_page_header))
+                    return success_response({"datas":prescriptiondatas,'Pagination':total_pages})
+                return failure_response(statuscode='409', content=f'No appointments on DATE:{appointmentDate} TIME:{appointmentTime}')
+            return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
+        return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def add_Feedback():
@@ -290,20 +337,28 @@ def add_Feedback():
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 def get_All_Prescription():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    data = request.get_json()
-    required_fields = ['patientEmailId', 'doctorEmailId']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
-    patientEmailId = data['patientEmailId']
-    doctorEmailId = data['doctorEmailId']
-    if check_email_existence(patientEmailId):
-        if check_email_existence(doctorEmailId):
-            reports,total_page = get_Prescription(patientEmailId, doctorEmailId,page,per_page)
-            return success_response({"data": reports,"Pagination":total_page})
-        return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
-    return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
+    try:
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        data = request.get_json()
+        required_fields = ['patientEmailId', 'doctorEmailId']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+        patientEmailId = data['patientEmailId']
+        doctorEmailId = data['doctorEmailId']
+        if check_email_existence(patientEmailId):
+            if check_email_existence(doctorEmailId):
+                reports,total_page = get_Prescription(patientEmailId, doctorEmailId,int(page_header),int(per_page_header))
+                return success_response({"data": reports,"Pagination":total_page})
+            return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
+        return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 

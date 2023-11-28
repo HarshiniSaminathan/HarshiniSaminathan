@@ -37,9 +37,7 @@ from flask_sqlalchemy import Pagination
 
 def fetch_doctor_records(page, per_page):
     query = DoctorTable.query
-
     doctor_info = query.paginate(page=page, per_page=per_page)
-
     items = doctor_info.items
     if items:
         data = []

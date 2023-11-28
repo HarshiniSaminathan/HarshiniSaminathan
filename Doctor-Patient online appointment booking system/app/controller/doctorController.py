@@ -101,30 +101,36 @@ def doctor_appointments(doctorEmailId, page, per_page):
         result = []
         for patient_name, patient_email, patient_phone, appointment_date, appointment_time in appointments:
             appointmentId = findAppointmnetId(doctorEmailId, patient_email, appointment_date, appointment_time)
-            medical_records = MedicalRecordsTable.query.filter_by(appointmentId=appointmentId).all()
+            print(appointmentId)
+            medical_records = PMRecordTable.query.filter_by(appointmentId=appointmentId).first()
+
+            records_for_appointment = []
             if medical_records:
-                records_for_appointment = []
-                for medical_record in medical_records:
-                    PMReport = medical_record.PMReport
-                    description = medical_record.description
-                    EncodedPMReport = base64.b64encode(PMReport).decode('utf-8')
+                PMReport = medical_records.PMReport
+                description = medical_records.description
+                records_for_appointment.append({
+                    "PMReport": PMReport,
+                    "description": description
+                        })
+                print(records_for_appointment)
+            else:
+                records_for_appointment.append({
+                    "PMReport": None,
+                    "description": None
+                })
 
-                    records_for_appointment.append({
-                        "PMReport": EncodedPMReport,
-                        "description": description
-                    })
-
-                result.append({
-                    "patientName": patient_name,
-                    "patientEmailId": patient_email,
-                    "patientPhoneNumber": patient_phone,
-                    "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
-                    "appointmentTime": appointment_time.strftime('%H:%M'),
-                    "medicalRecords": records_for_appointment
+            result.append({
+                "patientName": patient_name,
+                "patientEmailId": patient_email,
+                "patientPhoneNumber": patient_phone,
+                "appointmentDate": appointment_date.strftime('%Y-%m-%d'),
+                "appointmentTime": appointment_time.strftime('%H:%M'),
+                "medicalRecords": records_for_appointment
                 })
         return result, appointments_info.pages
     else:
         return None
+
 
 
 def addPrescription(appointmentId, medication, dosage,instruction):
@@ -239,3 +245,12 @@ def get_patient_PMReports(patientEmailId, doctorEmailId, page, per_page):
         return result, appointments_info.pages
     else:
         return [{"data": None}]
+
+
+def findPMRecord(appointmentId):
+    PMRfile=PMRecordTable.query.filter_by(appointmentId=appointmentId).first()
+    if PMRfile:
+        PMRfiles=PMRfile.PMReport
+        return PMRfiles
+    else:
+        return None

@@ -213,15 +213,10 @@ def patient_appointments(patientEmailId, page, per_page):
                     and_(
                         appointmentTable.appointmentDate == current_datetime.date(),
                         appointmentTable.appointmentTime > current_datetime.time()
-                    )
-                )
-            )
-        )
+                    ))))
         .order_by(asc(appointmentTable.appointmentDate), asc(appointmentTable.appointmentTime))
     )
-
     total_records = query.count()
-
     appointments = query.offset((page - 1) * per_page).limit(per_page).all()
 
     if appointments:
@@ -237,14 +232,15 @@ def patient_appointments(patientEmailId, page, per_page):
         ]
         return result, total_records
     else:
-        return [{"data": None}]
+        results= None
+        totalRecors = None
+        return results, totalRecors
 
 
 
 def countOfAppointmentsPerDay(patientEmailId, page, per_page):
     patient_id = findPatientId(patientEmailId)
     current_date = datetime.now().date()
-
     query = (
         db.session.query(
             appointmentTable.appointmentDate,
@@ -258,7 +254,6 @@ def countOfAppointmentsPerDay(patientEmailId, page, per_page):
     )
 
     total_records = query.count()
-
     appointments = query.offset((page - 1) * per_page).limit(per_page).all()
     if appointments:
         result = [
@@ -290,7 +285,6 @@ def doctor_for_Specialization(doctorSpecialization, page, per_page):
         .limit(per_page)
         .all()
     )
-
     data = []
     if doctors:
         for doctor in doctors:
@@ -538,7 +532,9 @@ def get_Prescription(patientEmailId, doctorEmailId, page, per_page):
 
         return result,total_pages
     else:
-        return {"data": [{"data": None}], "total_pages": 0}
+        Results = None
+        totalPage = None
+        return Results,totalPage
 
 def check_for_PMR_beforeDay():
     try:

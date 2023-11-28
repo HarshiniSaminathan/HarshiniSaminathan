@@ -4,6 +4,8 @@ from flask import Flask
 from flask_cors import CORS
 from flask_mail import Mail
 from celery import Celery
+
+from app.views.userViews import loginapi_blueprint
 from config import SECRET_KEY
 from app.views.adminViews import adminapi_blueprint
 from app.views.patientViews import patientapi_blueprint
@@ -55,6 +57,7 @@ scheduler.init_app(app)
 app.register_blueprint(adminapi_blueprint)
 app.register_blueprint(patientapi_blueprint)
 app.register_blueprint(doctorapi_blueprint)
+app.register_blueprint(loginapi_blueprint)
 
 @scheduler.task('cron', id='check_for_PMR', hour=16, minute=00)  # 4:00 PM
 def scheduled_check_for_PMR():

@@ -45,11 +45,20 @@ def register_doctor():
 
 
 def get_Register_Doctor_Records():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    doctor_info, total_pages = fetch_doctor_records(page, per_page)
-    total_doctors = get_total_doctor()
-    return success_response({'data': doctor_info, 'Doctor-Total-Count': str(total_doctors), 'Pagination': str(total_pages)})
+    try:
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+
+        doctor_info, total_pages = fetch_doctor_records(int(page_header), int(per_page_header))
+        total_doctors = get_total_doctor()
+        return success_response({'data': doctor_info, 'Doctor-Total-Count': str(total_doctors), 'Pagination': str(total_pages)})
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def register_Admin():
@@ -78,11 +87,19 @@ def register_Admin():
 
 
 def get_Register_Admin_Records():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
-    data,total_pages = fetch_admin_records(page,per_page)
-    total_admin = get_total_admin()
-    return success_response({'data': data, 'Admin-Total-Count': str(total_admin),'Pagination':total_pages})
+    try:
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        data,total_pages = fetch_admin_records(int(page_header), int(per_page_header))
+        total_admin = get_total_admin()
+        return success_response({'data': data, 'Admin-Total-Count': str(total_admin),'Pagination':total_pages})
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def add_Slot_To_Doctors():
@@ -110,51 +127,67 @@ def add_Slot_To_Doctors():
 
 
 def update_Slots_status(doctorEmailId):
-    if check_email_existence(doctorEmailId):
-        try:
-            data = request.get_json()
-            slotStatus = data['slotStatus']
-            slotStartTime = data['slotStartTime']
-            slotEndTime = data['slotEndTime']
-            if check_email_existence(doctorEmailId):
-                updateSlots(doctorEmailId,slotStartTime, slotEndTime,slotStatus)
-                return success_response('Slots updated successfully')
-            return failure_response(statuscode='409', content='Email id does not exists')
-        except Exception as e:
-            print(f"Error: {e}")
-            return failure_response(statuscode='500', content=str(e))
-    else:
-        return failure_response(statuscode='500',content='Emailid Does Not Exists')
+    try:
+        if check_email_existence(doctorEmailId):
+            try:
+                data = request.get_json()
+                slotStatus = data['slotStatus']
+                slotStartTime = data['slotStartTime']
+                slotEndTime = data['slotEndTime']
+                if check_email_existence(doctorEmailId):
+                    updateSlots(doctorEmailId,slotStartTime, slotEndTime,slotStatus)
+                    return success_response('Slots updated successfully')
+                return failure_response(statuscode='409', content='Email id does not exists')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=str(e))
+        else:
+            return failure_response(statuscode='500',content='Emailid Does Not Exists')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def response_For_Feedback():
-    data=request.get_json()
-    required_fields = ['patientEmailId', 'feedbackText', 'rating','feedbackResponse']
-    for field in required_fields:
-        if field not in data or not data[field]:
-            return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
-    patientEmailId = data['patientEmailId']
-    feedbackText = data['feedbackText']
-    rating = data['rating']
-    feedbackResponse=data['feedbackResponse']
     try:
-        patientId=findPatientId(patientEmailId)
-        addFeedbackResponse(patientId,feedbackText,rating,feedbackResponse)
-        return success_response('FeedbackResponse added successfully')
+        data=request.get_json()
+        required_fields = ['patientEmailId', 'feedbackText', 'rating','feedbackResponse']
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+        patientEmailId = data['patientEmailId']
+        feedbackText = data['feedbackText']
+        rating = data['rating']
+        feedbackResponse=data['feedbackResponse']
+        try:
+            patientId=findPatientId(patientEmailId)
+            addFeedbackResponse(patientId,feedbackText,rating,feedbackResponse)
+            return success_response('FeedbackResponse added successfully')
+        except Exception as e:
+            print(f"Error: {e}")
+            return failure_response(statuscode='500', content=str(e))
     except Exception as e:
         print(f"Error: {e}")
-        return failure_response(statuscode='500', content=str(e))
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 
 def get_All_Feedback():
-    page = request.args.get('page', default=1, type=int)
-    per_page = request.args.get('per_page', default=2, type=int)
     try:
-        datas,total_page=get_feedbacks(page,per_page)
-        if datas:
-            return success_response({"data":datas,"Pagination":total_page})
-        else:
-            return success_response({"data":None})
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('Per-Page')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        try:
+            datas,total_page=get_feedbacks(int(page_header), int(per_page_header))
+            if datas:
+                return success_response({"data":datas,"Pagination":total_page})
+            else:
+                return success_response({"data":None})
+        except Exception as e:
+            print(f"Error: {e}")
+            return failure_response(statuscode='500', content=str(e))
     except Exception as e:
         print(f"Error: {e}")
-        return failure_response(statuscode='500', content=str(e))
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
