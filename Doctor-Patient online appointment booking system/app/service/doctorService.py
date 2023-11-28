@@ -102,7 +102,6 @@ def add_Prescription():
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
-
 def response_For_Feedback_():
     try:
         data = request.get_json()
@@ -176,7 +175,10 @@ def get_All_PMReports():
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
-def download_PMReports():
+global_appoinmentId = None
+
+def return_filename():
+    global global_appoinmentId
     try:
         data = request.get_json()
         if data is None:
@@ -192,16 +194,33 @@ def download_PMReports():
         appointmentTime = data['appointmentTime']
         if check_email_existence(doctorEmailId):
             if check_email_existence(patientEmailId):
-                appointmentId=findAppointmnetId(doctorEmailId,patientEmailId,appointmentDate,appointmentTime)
-                PMRecordFile=findPMRecord(appointmentId)
+                appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointmentDate, appointmentTime)
+                global_appoinmentId = appointmentId  # Update the global variable
+                PMRecordFile = findPMRecord(appointmentId)
                 if PMRecordFile:
-                    from run import UPLOAD_FOLDER
-                    filepath = os.path.join(UPLOAD_FOLDER, PMRecordFile)
-                    return send_file(filepath, as_attachment=True)
+                    print(global_appoinmentId,"global in 1st API")
+                    return success_response({"data": PMRecordFile})
                 else:
                     return failure_response(statuscode='404', content='PMR Record file not found')
-            return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exists')
-        return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exists')
+            return failure_response(statuscode='409', content=f'EmailId:{doctorEmailId} does not exist')
+        return failure_response(statuscode='409', content=f'EmailId:{patientEmailId} does not exist')
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+def download_files():
+    from run import UPLOAD_FOLDER
+    global global_appoinmentId
+    try:
+        PMRecordFile = findPMRecord(global_appoinmentId)
+        print(global_appoinmentId, "global in 2 nd API")
+        if PMRecordFile:
+            filepath = os.path.join(UPLOAD_FOLDER, PMRecordFile)
+            return send_file(filepath, as_attachment=True)
+        else:
+            return failure_response(statuscode='404', content='PMR Record file not found')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+

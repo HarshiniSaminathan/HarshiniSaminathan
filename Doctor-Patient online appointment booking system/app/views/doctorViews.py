@@ -1,7 +1,8 @@
 from flask import Blueprint
 
-from app.service.doctorService import (responding_for_appointment,get_All_PMReports,download_PMReports,
-                                       get_doctor_appointments,count_appointments,add_Prescription,response_For_Feedback_,get_All_Feedbacks)
+from app.service.doctorService import (responding_for_appointment, get_All_PMReports,
+                                       get_doctor_appointments, count_appointments, add_Prescription,
+                                       response_For_Feedback_, get_All_Feedbacks, return_filename, download_files)
 from app.service.userService import token_required
 
 doctorapi_blueprint = Blueprint('doctorapi', __name__, url_prefix='/api/doctor')
@@ -38,8 +39,13 @@ def responseForFeedback():
 def getAllPMReports():
     return get_All_PMReports()
 
-@doctorapi_blueprint.route("/downloadPMReports",methods=['GET'])
+@doctorapi_blueprint.route("/returnFilename",methods=['GET'])
 @token_required(['DOCTOR'])
+def returnFilename():
+    return return_filename()
+
+@doctorapi_blueprint.route("/downloadPMReports",methods=['GET'])
 def downloadPMReports():
-    return download_PMReports()
+    return download_files()
+
 
