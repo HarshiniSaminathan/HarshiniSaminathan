@@ -9,3 +9,5 @@ class AdminTable(db.Model):
     adminAddress = db.Column(db.String(255))
     emailId = db.Column(db.String(255), db.ForeignKey('userTable.emailId', ondelete='CASCADE'), unique=True)
     user = db.relationship('UserTable', back_populates='admin', uselist=False)
+
+

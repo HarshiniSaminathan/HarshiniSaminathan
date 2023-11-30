@@ -1,6 +1,7 @@
 from flask import Blueprint
 
-from app.service.adminService import (register_doctor,response_For_Feedback,get_Register_Doctor_Records,get_All_Feedback,
+from app.service.adminService import (register_doctor,response_For_Feedback,get_Register_Doctor_Records,get_All_Feedback,uploading_Doctor_Excel,
+                                      download_Errors_InExcel,download_Valid_InExcel,patient_Excel,
                                       register_Admin,get_Register_Admin_Records,add_Slot_To_Doctors,update_Slots_status)
 from app.service.userService import token_required
 
@@ -45,3 +46,20 @@ def getAllFeedback():
 @token_required(['ADMIN'])
 def responseForFeedback():
     return response_For_Feedback()
+
+@adminapi_blueprint.route("uploadingDoctorExcel",methods=['POST'])
+def uploadingDoctorExcel():
+    return uploading_Doctor_Excel()
+
+@adminapi_blueprint.route("downloadErrorsInExcel",methods=['GET'])
+def downloadErrorsInExcel():
+    return download_Errors_InExcel()
+
+@adminapi_blueprint.route("downloadValidInExcel",methods=['GET'])
+def downloadValidInExcel():
+    return download_Valid_InExcel()
+
+@adminapi_blueprint.route("patientExcel",methods=['GET'])
+def patientExcel():
+    return patient_Excel()
+

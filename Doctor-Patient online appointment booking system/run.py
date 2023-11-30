@@ -27,7 +27,7 @@ from app.controller.patientController import check_for_PMR_beforeDay
 from app.models.userModel import db
 
 UPLOAD_FOLDER = '/home/divum/Downloads/new_training/HarshiniSaminathan/Doctor-Patient online appointment booking system/uploads'
-ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg'}
+ALLOWED_EXTENSIONS = {'pdf', 'png', 'jpg', 'jpeg','xlsx'}
 
 
 

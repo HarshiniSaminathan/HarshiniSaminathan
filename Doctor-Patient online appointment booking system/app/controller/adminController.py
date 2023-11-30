@@ -3,6 +3,7 @@ import base64
 from sqlalchemy.orm import joinedload
 
 from app.models.doctorModel import DoctorTable
+from app.models.patientModel import PatientTable
 from app.utils.commanUtils import add_in_entity, update_in_entity
 from app.models.userModel import UserTable
 from app.models.adminModel import AdminTable
@@ -181,4 +182,25 @@ def get_feedbacks(page, per_page):
         return data_list, feedbacks_info.pages
     else:
         data=[{"data":None}]
+        return data
+
+
+def fetch_patient_records():
+    query = PatientTable.query
+
+    if query:
+        data = []
+        for patient in query:
+            data.append({
+                "patientFirstName": patient.patientFirstName,
+                "patientLastName": patient.patientLastName,
+                "patientPhoneNumber": patient.patientPhoneNumber,
+                "patientDOB": patient.patientDOB.strftime("%Y/%m/%d"),
+                "patientAddress": patient.patientAddress,
+                "patientEmailId": patient.patientEmailId
+            })
+
+        return data
+    else:
+        data = [{"data": None}]
         return data
