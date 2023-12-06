@@ -8,6 +8,7 @@ class User(db.Document):
     fullname = db.StringField(required=True)
     role = db.StringField(required=True)
     status = db.StringField(required=True)
+    accountType =db.StringField(required=True)
     created_at = db.DateTimeField(required=True)
     sessionCode = db.StringField()
 

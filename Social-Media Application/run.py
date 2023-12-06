@@ -4,6 +4,9 @@ from flask import Flask
 from app.models.dbModels import db
 from app.models.userModel import User
 from app.models.userProfileModel import UserProfile
+from app.models.postsModel import Post
+from app.models.followersModel import Followers
+from app.models.likeModel import Like
 from app.views.adminViews import adminapi_blueprint
 from app.views.userViews import userapi_blueprint
 from config import SECRET_KEY
