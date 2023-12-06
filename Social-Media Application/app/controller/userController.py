@@ -223,24 +223,51 @@ def Get_friends_profile(followerEmailid, page, per_page):
 
 
 def Get_friends_post(emailid, page, per_page):
-    required_fields = {'id':None,'emailid': None, 'postType': None, 'post': None, 'caption': None, 'created_at': None, 'tagUsername': None}
-    get_following_email = Followers.objects(emailid=emailid,status='ACCEPTED').first()
+
+    required_fields = {'id': None, 'emailid': None, 'postType': None, 'post': None, 'caption': None, 'created_at': None,
+                       'tagUsername': None}
+    get_following_email = Followers.objects(emailid=emailid, status='ACCEPTED').first()
 
     if get_following_email:
-        get_List_Post = Post.objects(emailid=get_following_email.followerEmailid, status='ACTIVE').only(*required_fields.keys()).paginate(page=page, per_page=per_page)
+        get_List_Post = Post.objects(emailid=get_following_email.followerEmailid, status='ACTIVE').only(
+            *required_fields.keys()).paginate(page=page, per_page=per_page)
 
         if get_List_Post:
             total_pages = (get_List_Post.total / per_page) + (get_List_Post.total % per_page > 0)
-            profile = [{field: getattr(user, field) for field in required_fields} for user in get_List_Post.items]
+            profile = []
 
-            for post_info in profile:
-                postId = post_info['id']
-                like_count = Like.objects(id=postId).count()
-                post_info['like_count'] = like_count
+            for post in get_List_Post.items:
+                post_info = {field: getattr(post, field) for field in required_fields}
+
+                likes = Like.objects(postid=str(post.id))
+                count=Like.objects(postid=str(post.id)).count()
+
+                post_info['likes'] = [
+                    {
+                        'emailid': like.emailid,
+                        'created_at': like.created_at,
+
+                    }
+                    for like in likes
+                ]
+
+                comments = Comments.objects(postid=str(post.id))
+                comment_count=Comments.objects(postid=str(post.id)).count()
+                post_info['comments'] = [
+                    {
+                        'id': str(comment.id),
+                        'emailid': comment.emailid,
+                        'comment': comment.comments,
+                        'created_at': comment.created_at,
+
+                    }
+                    for comment in comments
+                ]
+                profile.append(post_info)
+                profile.append({"Like-count": count, "Comment-Count": comment_count})
             return profile, int(total_pages)
 
-    return None, int(0),int(0)
-
+    return None, int(0)
 
 def Get_Particular_friends_post(emailid, page, per_page):
     required_fields = {'emailid': None, 'postType': None, 'post': None, 'caption': None, 'created_at': None,
@@ -261,6 +288,7 @@ def Get_Particular_friends_post(emailid, page, per_page):
 
         return result, int(total_pages), get_List_Post.total
     return None, int(0),int(0)
+
 
 def check_account_Type(followerEmailid):
     return User.objects(emailid=followerEmailid,accountType='PUBLIC').first() is not None
@@ -424,10 +452,11 @@ def save_comments(postid,comments,emailid):
         return False
 def save_replycomments(commentid,replycomments,emailid):
     try:
-        comment=Comments.objects(id=commentid).first()
+        comment = Comments.objects(id=commentid).first()
         if comment:
-            comment.replyComment = replycomments
-            comment.replyemailid = emailid
+            created_at = datetime.utcnow()
+            reply_data = {"emailid": emailid, "replycomment": replycomments,"created_at":created_at}
+            comment.replyComment.append(reply_data)
             comment.save()
             return True
         else:

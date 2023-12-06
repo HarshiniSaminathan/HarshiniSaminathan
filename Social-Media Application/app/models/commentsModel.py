@@ -6,8 +6,7 @@ class Comments(db.Document):
     emailid = db.StringField(required=True)
     created_at = db.DateTimeField(required=True)
     comments = db.StringField(required=True)
-    replyComment = db.StringField()
-    replyemailid = db.StringField()
+    replyComment = db.ListField()
 
 
 

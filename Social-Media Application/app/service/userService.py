@@ -20,6 +20,7 @@ from app.controller.userController import (check_email_existence, insert_user, c
                                            addPost, delete_Post, check_post_exists, status_for_request,
                                            request_to_follow, check_postid, search_username, save_comments,
                                            save_replycomments, deletecomment)
+from app.models.likeModel import Like
 
 from app.response import failure_response, success_response
 from config import SECRET_KEY
@@ -523,7 +524,6 @@ def view_Post():
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
-
 
 def view_Post_Of_ParticularFriend():
     try:
