@@ -67,7 +67,6 @@ def activating_The_Post():
     try:
         data = request.get_json()
         postid=data['postid']
-
         status = 'ACTIVE'
         if postid:
             if activatePost(postid,status):

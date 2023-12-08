@@ -12,14 +12,16 @@ from datetime import datetime, timedelta
 from app.controller.userController import (check_email_existence, insert_user, check_login, check_username_existence,
                                            check_account_Type, \
                                            check_email_For_Username, add_profile, updateSessionCode,
+                                           update_Message_Status,
                                            check_emailhas_sessionCode, block_friend, unblock_friend, Get_block_list,
                                            Get_Profile_Info_ByUsername, likepost,
                                            unlikepost, responding_For_Resquest, Get_Particular_friends_post,
-                                           unfollow_friend, Get_Profile_Info, List_followers,
+                                           unfollow_friend, Get_Profile_Info, List_followers, postMessages,
                                            Get_friends_profile, Get_friends_post, List_following, deleteSession,
                                            addPost, delete_Post, check_post_exists, status_for_request,
                                            request_to_follow, check_postid, search_username, save_comments,
-                                           save_replycomments, deletecomment)
+                                           save_replycomments, deletecomment, check_delete_access, deleteMessage,
+                                           Get_entire_messages, check_for_hashtags, get_posts)
 from app.models.likeModel import Like
 
 from app.response import failure_response, success_response
@@ -214,8 +216,9 @@ def add_post():
                             return failure_response(statuscode='409', content=f'TagUserName:"{user}" does not exists/INACTIVE')
                         filename = secure_filename(file.filename)
                         file.save(os.path.join(UPLOAD_FOLDER, filename))
-                        addPost(emailid,postType,filename,caption,tagUsername,status)
-                        return success_response("Post Added Successfully")
+                        if addPost(emailid,postType,filename,caption,tagUsername,status):
+                            return success_response("Post Added Successfully")
+                        return failure_response(statuscode='409', content=f'Post Addition ERROR')
                 return failure_response(statuscode='409', content=f'EmailId:{emailid} does not exists/INACTIVE')
             except Exception as e:
                 print(f"Error: {e}")
@@ -234,17 +237,18 @@ def deletePost():
                 payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
                 emailid = payload.get('EmailId')
                 data = request.get_json()
-                required_fields = ['created_at']
+                required_fields = ['postid']
                 if required_fields:
                     for field in required_fields:
                         if field not in data or not data[field]:
                             return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
 
-                    created_at = data['created_at']
+                    postid = data['postid']
                     if check_email_For_Username(emailid):
-                        if check_post_exists(emailid,created_at):
-                            delete_Post(emailid, created_at)
-                            return success_response("Post Deleted Successfully")
+                        if check_post_exists(emailid,postid):
+                            if delete_Post(emailid, postid):
+                                return success_response("Post Deleted Successfully")
+                            return failure_response(statuscode='409', content='Post Does Not Deleted')
                         return failure_response(statuscode='409', content='Post Does Not exists')
                     return failure_response(statuscode='409', content=f'EmailId:{emailid} does not exists/INACTIVE')
                 return failure_response(statuscode='409', content='required_fields Not found')
@@ -841,6 +845,173 @@ def delete_Comments():
                     return success_response('Comments deleted Successfully')
 
                 return failure_response(statuscode='409', content='Unable to delete (INCORRECT ACCESS/COMMENTID)')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def post_Messages():
+    try:
+        token = request.headers.get('Authorization')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                senderEmailid=payload.get('EmailId')
+                required_fields = ['receiverEmailid','content']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                receiverEmailid = data['receiverEmailid']
+                content = data['content']
+                read = False
+                if check_email_For_Username(receiverEmailid):
+                    if check_account_Type(receiverEmailid): # NOT PUBLIC
+                        if status_for_request(senderEmailid,receiverEmailid):
+                            status = status_for_request(senderEmailid, receiverEmailid).status
+                            print(status)
+                            if status == 'ACCEPTED':
+                                if postMessages(senderEmailid,receiverEmailid,content,read):
+                                    return success_response('Messages Posted Successfully')
+                                return failure_response(statuscode='409', content=f'Message Post ERROR')
+                            return failure_response(statuscode='409', content=f'NOT FOLLOWING')
+                        return failure_response(statuscode='409', content=f'NOT FOLLOWING')
+
+                    if postMessages(senderEmailid, receiverEmailid, content, read):
+                        return success_response('Messages Posted Successfully')
+                    return failure_response(statuscode='409', content=f'Message Post ERROR')
+
+                return failure_response(statuscode='409', content=f'EmailId:{receiverEmailid} does not exists/INACTIVE')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def delete_Message():
+    try:
+        token = request.headers.get('Authorization')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                senderEmailid=payload.get('EmailId')
+                required_fields = ['messageId']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                messageId = data['messageId']
+                print(messageId)
+                if check_delete_access(senderEmailid,messageId):
+                    if deleteMessage(senderEmailid,messageId):
+                        return success_response('Messages Deleted Successfully')
+                    return failure_response(statuscode='500', content=f'ERROR in deleting Messages')
+                return failure_response(statuscode='500', content=f'Does not have right access to DELETE/DELETED ALREADY')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+
+def get_Messages_BY_Emailid():
+    try:
+        token = request.headers.get('Authorization')
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('PerPage')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                Emailid=payload.get('EmailId')
+                required_fields = ['friendId']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                friendId = data['friendId']
+                if check_email_For_Username(friendId):
+                    if status_for_request(Emailid, friendId):
+                        status = status_for_request(Emailid, friendId).status
+                        print(status)
+                        if status == 'ACCEPTED':
+                            get_messages,total_pages=Get_entire_messages(Emailid,friendId,page_header,per_page_header)
+                            return success_response({'data': get_messages,'Pagination':total_pages})
+                        return failure_response(statuscode='409', content=f'NOT FOLLOWING')
+                    return failure_response(statuscode='409', content=f'NOT FOLLOWING')
+                return failure_response(statuscode='409', content=f'EmailId:{friendId} does not exists/INACTIVE')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def update_Read_Status():  # ( SINGLE MESSAGES UPDATED / NOT ALL THE MESSAGES AT A TIME )
+    try:
+        token = request.headers.get('Authorization')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                Emailid = payload.get('EmailId')
+                required_fields = ['messageId']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                messageId = data['messageId']
+                if check_delete_access(Emailid, messageId):
+                    if update_Message_Status(messageId):
+                        return success_response('Message READ STATUS: TRUE')
+                    return failure_response(statuscode='500', content=f'Update ERROR')
+                return failure_response(statuscode='500', content=f'Does not have right access to UPDATE/DELETED ALREADY')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def get_Post_By_Hashtags():
+    try:
+        token = request.headers.get('Authorization')
+        page_header = request.headers.get('Page')
+        per_page_header = request.headers.get('PerPage')
+        if not page_header:
+            return failure_response(statuscode='401', content='page_header is missing')
+        if not per_page_header:
+            return failure_response(statuscode='401', content='per_page_header is missing')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                Emailid = payload.get('EmailId')
+                required_fields = ['hashtag']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                hashtag = data['hashtag']
+                if check_for_hashtags(hashtag):
+                    data = []
+                    postid=check_for_hashtags(hashtag)
+                    for id in postid:
+                        post_info,total_pages=get_posts(id,page_header,per_page_header)
+
+                        data.append( {'Post_info': post_info,'Total_pages':total_pages})
+                    return success_response({'data':data})
+                return failure_response(statuscode='400', content='Hashtag Not Available')
             except Exception as e:
                 print(f"Error: {e}")
                 return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')

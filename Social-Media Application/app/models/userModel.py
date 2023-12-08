@@ -12,6 +12,3 @@ class User(db.Document):
     created_at = db.DateTimeField(required=True)
     sessionCode = db.StringField()
 
-
-
-

@@ -7,12 +7,3 @@ class Comments(db.Document):
     created_at = db.DateTimeField(required=True)
     comments = db.StringField(required=True)
     replyComment = db.ListField()
-
-
-
-
-
-
-
-
-

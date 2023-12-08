@@ -7,6 +7,8 @@ from app.models.userProfileModel import UserProfile
 from app.models.postsModel import Post
 from app.models.followersModel import Followers
 from app.models.likeModel import Like
+from app.models.messageModel import Message
+from app.models.hashtagModel import Hashtag
 from app.views.adminViews import adminapi_blueprint
 from app.views.userViews import userapi_blueprint
 from config import SECRET_KEY

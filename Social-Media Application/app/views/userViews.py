@@ -1,11 +1,12 @@
 from flask import Blueprint
 
 from app.service.userService import (user_Sign_Up, login, addProfile, token_required, unFollowFriend, veiw_Profile,
-                                     following_List, Followers_List, view_Post, post_Comments,
+                                     following_List, Followers_List, view_Post, post_Comments, update_Read_Status,
                                      log_Out, add_post, deletePost, requestForFollow, block_Friend, unblock_Friend,
                                      block_list, filter_By_username, like_The_Post, Reply_For_Comments,
                                      search_Username, unlike_The_Post, responding_For_followRequest,
-                                     view_Friends_Profile, view_Post_Of_ParticularFriend, delete_Comments)
+                                     view_Friends_Profile, view_Post_Of_ParticularFriend, delete_Comments,
+                                     post_Messages, delete_Message, get_Messages_BY_Emailid, get_Post_By_Hashtags)
 
 userapi_blueprint = Blueprint('userapi', __name__, url_prefix='/api/user')
 
@@ -131,3 +132,28 @@ def ReplyForComments():
 @token_required(['USER'])
 def deleteComments():
     return delete_Comments()
+
+@userapi_blueprint.route("postMessages",methods=['POST'])
+@token_required(['USER'])
+def postMessages():
+    return post_Messages()
+
+@userapi_blueprint.route("deleteMessage",methods=['DELETE'])
+@token_required(['USER'])
+def deleteMessage():
+    return delete_Message()
+
+@userapi_blueprint.route("getMessagesBYEmailid",methods=['GET'])
+@token_required(['USER'])
+def getMessagesBYEmailid():
+    return get_Messages_BY_Emailid()
+
+@userapi_blueprint.route("updateReadStatus",methods=['PUT'])
+@token_required(['USER'])
+def updateReadStatus():
+    return update_Read_Status()
+
+@userapi_blueprint.route("getPostByHashtags",methods=['GET'])
+@token_required(['USER'])
+def getPostByHashtags():
+    return get_Post_By_Hashtags()

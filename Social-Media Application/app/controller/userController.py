@@ -4,8 +4,10 @@ from app.models.postsModel import Post
 from app.models.userModel import User
 from app.models.followersModel import Followers
 from app.models.userProfileModel import UserProfile
+from app.models.messageModel import Message
 from app.models.likeModel import Like
 from app.models.commentsModel import Comments
+from app.models.hashtagModel import Hashtag
 from datetime import datetime, timedelta
 
 
@@ -83,24 +85,32 @@ def deleteSession(email):
 def addPost(emailid,postType,filename,caption,tagUsername,status):
     created_at = datetime.utcnow()
     user= Post(emailid=emailid,postType=postType,post=str(filename),caption=caption,tagUsername=tagUsername,created_at=created_at,status=status)
-    user.save()
+    if user:
+        user.save()
+        return user
 
 
-def delete_Post(emailid, created_at):
+
+def delete_Post(emailid, postid):
     try:
-        post=Post.objects(emailid=emailid,created_at=created_at)
+        post = Post.objects.get(emailid=emailid, id=postid)
+
         if post:
             post.delete()
+            hashtag = Hashtag.objects(postid=postid)
+
+            if hashtag:
+                for tag in hashtag:
+                    tag.update(pull__postid=postid)
             return True
         else:
             return False
     except Exception as e:
-        print(f"Error in deletePost: {e}")
+        print(f"Error in delete_Post: {e}")
         return False
 
-
-def check_post_exists(emailid,created_at):
-    return Post.objects(emailid=emailid,created_at=created_at).first() is not None
+def check_post_exists(emailid,postid):
+    return Post.objects(emailid=emailid,id=postid).first() is not None
 
 
 def status_for_request(emailid,followerEmailid):
@@ -295,15 +305,27 @@ def check_account_Type(followerEmailid):
 
 
 def activatePost(postid,status):
+    created_at = datetime.utcnow()
     try:
+        post = Post.objects(id=postid).first()
 
-        user=Post.objects(id=postid).first()
-        print(user.status)
-        if user.status == 'INACTIVE':
-            user.status=status
-            print(user.status)
-            user.save()
-            return True
+        if post.status == 'INACTIVE':
+            post.status = status
+            post.save()
+            caption = post.caption
+
+            if '#' in caption:
+                hashtags = [word.strip("#") for word in caption.split() if word.startswith("#")]
+                for hashtag in hashtags:
+                    existing_hashtag = Hashtag.objects(hashtag=hashtag).first()
+                    if existing_hashtag:
+                        existing_hashtag.postid.append(postid)
+                        existing_hashtag.save()
+                    else:
+                        new_hashtag = Hashtag(hashtag=hashtag, postid=[postid], created_at=str(created_at))
+                        new_hashtag.save()
+                return True
+
         else:
             return False
     except Exception as e:
@@ -477,4 +499,103 @@ def deletecomment(emailid,commentid):
         print(f"Error in reply comments: {e}")
         return False
 
+def postMessages(senderEmailid,receiverEmailid,content,read):
+    created_at = datetime.utcnow()
+    try:
+        Messages = Message(senderEmailid=senderEmailid,receiverEmailid=receiverEmailid,content=content,read=read,created_at=created_at)
+        Messages.save()
+        return True
+    except Exception as e:
+        print(f"Error in posting messages: {e}")
+        return False
 
+def check_delete_access(senderEmailid,messageId):
+    try:
+        Access1 = Message.objects(senderEmailid=senderEmailid,id=messageId).first()
+        Access2 = Message.objects(receiverEmailid=senderEmailid,id=messageId).first()
+        if Access1 or Access2:
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Error in deleting messages: {e}")
+        return False
+
+def deleteMessage(senderEmailid,messageId):
+    try:
+        Access1=Message.objects(senderEmailid=senderEmailid,id=messageId).first()
+        Access2 = Message.objects(receiverEmailid=senderEmailid, id=messageId).first()
+        if Access1:
+            Access1.delete()
+            return True
+        if Access2:
+            Access2.delete()
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Error in deleting messages: {e}")
+        return False
+def Get_entire_messages(email_id, friend_id, page_header, per_page_header):
+
+    required_fields = {'senderEmailid': None, 'content': None, 'created_at': None, 'read': None}
+
+
+    latest_message = (Message.objects
+                      .filter((Q(senderEmailid=email_id) & Q(receiverEmailid=friend_id)) |
+                              (Q(senderEmailid=friend_id) & Q(receiverEmailid=email_id)))
+                      .order_by('-created_at')
+                      .first())
+
+    if latest_message:
+        sender_email_id = latest_message.senderEmailid
+        receiver_email_id = latest_message.receiverEmailid
+
+        messages = (Message.objects
+                    .filter(((Q(senderEmailid=sender_email_id) & Q(receiverEmailid=receiver_email_id)) |
+                             (Q(senderEmailid=receiver_email_id) & Q(receiverEmailid=sender_email_id))))
+                    .only(*required_fields.keys())
+                    .order_by('created_at')
+                    .paginate(page=int(page_header), per_page=int(per_page_header)))
+
+        total_pages = (messages.total / int(per_page_header)) + (messages.total % int(per_page_header) > 0)
+
+        result = []
+        for message in messages.items:
+            message_data = {'senderEmailid': sender_email_id}
+            for field in required_fields:
+                message_data[field] = getattr(message, field)
+            result.append(message_data)
+
+        return result, int(total_pages)
+
+    return None, int(0)
+
+
+def update_Message_Status(messageId):
+    Messages=Message.objects(id=messageId).first()
+    if Messages:
+        Messages.read=True
+        Messages.save()
+        return True
+    else:
+        return False
+
+def check_for_hashtags(hashtag):
+    hashtag = Hashtag.objects(hashtag=hashtag).first()
+    print(hashtag.postid)
+    if hashtag:
+        return hashtag.postid
+
+def get_posts(id,page_header,per_page_header):
+    required_fields = {'emailid': None, 'postType': None, 'post': None, 'caption': None,'created_at':None,'tagUsername':None}
+    Emailid=Post.objects(id=id).first()
+    conditions = User.objects(emailid=Emailid.emailid,accountType='PUBLIC').first()
+    if conditions:
+        fetch_posts = Post.objects(id=id).only(*required_fields.keys()).paginate(page=int(page_header), per_page=int(per_page_header))
+        if fetch_posts:
+            total_pages = (fetch_posts.total / int(per_page_header)) + (fetch_posts.total % int(per_page_header) > 0)
+
+            return [{field: getattr(user, field) for field in required_fields} for user in fetch_posts.items],int(total_pages)
+        return None,int(0)
+    return None, int(0)
