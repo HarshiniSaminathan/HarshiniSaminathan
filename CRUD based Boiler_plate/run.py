@@ -8,6 +8,7 @@ app = Flask(__name__)
 CORS(app)
 app.register_blueprint(api_blueprint, url_prefix='')
 
+#table name : userinfo
 
 if __name__ == "__main__":
     app.secret_key = SECRET_KEY

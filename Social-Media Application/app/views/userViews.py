@@ -4,9 +4,10 @@ from app.service.userService import (user_Sign_Up, login, addProfile, token_requ
                                      following_List, Followers_List, view_Post, post_Comments, update_Read_Status,
                                      log_Out, add_post, deletePost, requestForFollow, block_Friend, unblock_Friend,
                                      block_list, filter_By_username, like_The_Post, Reply_For_Comments,
-                                     search_Username, unlike_The_Post, responding_For_followRequest,
+                                     search_Username, unlike_The_Post, responding_For_followRequest, change_Password,
                                      view_Friends_Profile, view_Post_Of_ParticularFriend, delete_Comments,
-                                     post_Messages, delete_Message, get_Messages_BY_Emailid, get_Post_By_Hashtags)
+                                     post_Messages, delete_Message, get_Messages_BY_Emailid, get_Post_By_Hashtags,
+                                     forgotPassword, verify_OTP, change_Password_By_Otp)
 
 userapi_blueprint = Blueprint('userapi', __name__, url_prefix='/api/user')
 
@@ -157,3 +158,23 @@ def updateReadStatus():
 @token_required(['USER'])
 def getPostByHashtags():
     return get_Post_By_Hashtags()
+
+@userapi_blueprint.route("changePassword",methods=['PUT'])
+@token_required(['USER'])
+def changePassword():
+    return change_Password()
+
+@userapi_blueprint.route("forgot_password",methods=['GET'])
+@token_required(['USER'])
+def forgot_password():
+    return forgotPassword()
+
+@userapi_blueprint.route("verifyOTP",methods=['GET'])
+@token_required(['USER'])
+def verifyOTP():
+    return verify_OTP()
+
+@userapi_blueprint.route('changePasswordByOtp',methods=['PUT'])
+@token_required(['USER'])
+def changePasswordByOtp():
+    return change_Password_By_Otp()

@@ -9,7 +9,6 @@ from datetime import datetime, timedelta
 from config import SECRET_KEY
 import hashlib
 
-
 def generate_session_code(user_info):
     user_info_str = str(user_info)
     hash_object = hashlib.sha256(user_info_str.encode())

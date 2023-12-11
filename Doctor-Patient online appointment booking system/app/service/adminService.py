@@ -371,5 +371,4 @@ def patientInfo_to_excel(data, excel_filepath):
     for row_num, patient in enumerate(data, start=1):
         for col_num, key in enumerate(headers):
             worksheet.write(row_num, col_num, patient.get(key, ""))
-
     workbook.close()

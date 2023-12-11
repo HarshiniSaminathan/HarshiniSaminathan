@@ -12,6 +12,7 @@ from app.models.hashtagModel import Hashtag
 from app.views.adminViews import adminapi_blueprint
 from app.views.userViews import userapi_blueprint
 from config import SECRET_KEY
+from flask_mail import Mail
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +22,13 @@ UPLOAD_FOLDER = '/home/divum/Downloads/new_training/HarshiniSaminathan/Social-Me
 app.config['MONGODB_SETTINGS'] = {
     'host': 'mongodb://localhost:27017/socialmedia'}
 
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USE_SSL'] = False
+app.config['MAIL_USERNAME'] = 'sharshini2003@gmail.com'
+app.config['MAIL_PASSWORD'] = 'znwm mgfw jaxc bdyp'
+mail = Mail(app)
 db.init_app(app)
 
 app.register_blueprint(adminapi_blueprint)

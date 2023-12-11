@@ -6,11 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="e38d9eb5-9b81-4002-b442-6e3543afbb8e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/models/user_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/models/user_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/service/user_service.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/service/user_service.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/strings.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/strings.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/utils/postgres_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/app/utils/postgres_utils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/run.py" beforeDir="false" afterPath="$PROJECT_DIR$/run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Practice_SQLLchemy/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../Practice_SQLLchemy/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../Practice_SQLLchemy/app/utils/comman_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/../Practice_SQLLchemy/app/utils/comman_utils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

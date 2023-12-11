@@ -4,7 +4,7 @@ import os
 import hashlib
 from functools import wraps
 
-from flask import request
+from flask import request, session
 import jwt
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
@@ -21,7 +21,7 @@ from app.controller.userController import (check_email_existence, insert_user, c
                                            addPost, delete_Post, check_post_exists, status_for_request,
                                            request_to_follow, check_postid, search_username, save_comments,
                                            save_replycomments, deletecomment, check_delete_access, deleteMessage,
-                                           Get_entire_messages, check_for_hashtags, get_posts)
+                                           Get_entire_messages, check_for_hashtags, get_posts, update_password)
 from app.models.likeModel import Like
 
 from app.response import failure_response, success_response
@@ -58,7 +58,6 @@ def user_Sign_Up():
             accountType = data['accountType']
             role = "USER"
             status="INACTIVE"
-
             if not check_email_existence(emailid):
                 if not check_username_existence(username):
                     insert_user(emailid, password, username, fullname, role, status,accountType)
@@ -116,7 +115,7 @@ def log_Out():
                 print("session-CODE-LOGOUT", session_code)
                 if email:
                     if check_emailhas_sessionCode(email,session_code):
-                        deleteSession(email)    # session Code delelte in the USER TABLE
+                        deleteSession(email)    # session Code delete in the USER TABLE
                         return success_response({"message": "Logout successful"})
                     else:
                         return failure_response(statuscode='401', content='Invalid session Code')
@@ -205,7 +204,6 @@ def add_post():
                     data = json.loads(form_data)
                 except json.JSONDecodeError:
                     return failure_response(statuscode='400', content='Invalid JSON data')
-
                 postType = data['postType']
                 caption = data['caption']
                 tagUsername = data['tagUsername']
@@ -1019,3 +1017,123 @@ def get_Post_By_Hashtags():
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+
+def change_Password():
+    try:
+        token = request.headers.get('Authorization')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                Emailid = payload.get('EmailId')
+                required_fields = ['oldpassword','newpassword']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                oldpassword = data['oldpassword']
+                newpassword = data['newpassword']
+                user = check_login(Emailid, oldpassword)
+                if user:
+                    if update_password(Emailid,newpassword):
+                        return success_response('Password changed successfully')
+                    return failure_response(statuscode='400', content='unable to change the IOldPassword')
+                return failure_response(statuscode='400', content='OldPassword Incorrect')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def forgotPassword():
+    try:
+        from app.utils.emailSender import otpSending
+        token = request.headers.get('Authorization')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                EmailId = payload.get('EmailId')
+                if check_email_For_Username(EmailId):
+                    try:
+                        global_otp, global_Email = otpSending(EmailId)
+                        print(global_Email, global_otp)
+                        session['global_OTP'] = global_otp
+                        session['global_EMAILID'] = global_Email
+                        return success_response('OTP sent Successfully')
+                    except Exception as e:
+                        print(f"Error: {e}")
+                        return failure_response(statuscode='500', content='ERROR: Occurred in OTP sending')
+
+                return failure_response(statuscode='409', content=f'EmailId: {EmailId} does not exists')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def verify_OTP():
+    try:
+        token = request.headers.get('Authorization')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                EmailId = payload.get('EmailId')
+                required_fields = ['OTP']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                OTP = data['OTP']
+                if check_email_For_Username(EmailId):
+                    try:
+                        stored_otp = session.get('global_OTP')
+                        stored_email = session.get('global_EMAILID')
+                        if EmailId == stored_email and OTP == stored_otp:
+                            return success_response('OTP Valid')
+                        else:
+                            return failure_response(statuscode='500', content='Invalid OTP')
+                    except Exception as e:
+                        print(f"Error: {e}")
+                        return failure_response(statuscode='500', content='An unexpected error occurred.')
+                return failure_response(statuscode='409', content=f'EmailId: {EmailId} does not exists')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def change_Password_By_Otp():
+    try:
+        token = request.headers.get('Authorization')
+        if token:
+            try:
+                payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
+                EmailId = payload.get('EmailId')
+                required_fields = ['newpassword']
+                data = request.get_json()
+                for field in required_fields:
+                    if field not in data or not data[field]:
+                        return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+                newpassword = data['newpassword']
+                if check_email_For_Username(EmailId):
+                    if update_password(EmailId,newpassword):
+                        return success_response('New password Changed Successfully')
+                    return failure_response(statuscode='409',content='Unable to change Password')
+                return failure_response(statuscode='409', content=f'EmailId: {EmailId} does not exists')
+            except Exception as e:
+                print(f"Error: {e}")
+                return failure_response(statuscode='500', content='An unexpected error occurred.')
+
+        return failure_response(statuscode='409', content='Token is missing')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+

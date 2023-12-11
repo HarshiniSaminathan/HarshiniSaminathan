@@ -1,1 +1,36 @@
-hello 
+
+	DOCTOR - PATIENT APPOINTMENT BOOKING SYSYTEM 
+
+	1) admin and doctor can only LOGIN and cannot signup. admin can register new admin and new doctor.  Admin can initially add slots while registering the Doctor. Patients can signup and then 		login .
+	
+	 --> DOCTOR AND ADMIN CAN update Slots status
+
+	2) doctor can view all the appoinmnets that he have (UPCOMING APPOINTMENTS, ACCEPTED APPOINMNETS) with PMR repots that the patient added for the particular appoinmnets.
+
+	3) patient can search for the doctors by specialization, name,email - REQUEST FOR THE APPOINMNET(STATUS-PENDING) , EMAIL SENT FOR REQUESTING
+	 
+	  --> Patient and doctor can update their profile 
+
+	4) patient can see all the availble slots, slots that the particular doctor have (PENDING,REJECTED AND NOT REQUESTED SLOTS) and also all the slots
+
+	5) Doctor can respond to the patient request , once responsed ACCEPTED/REJECTED (STATUS CHANGES FROM PENDING ) - Email sends with the appoinmnet status
+
+	6) Once the appoinmnet is get ACCEPTED, PMR reports can be added by patient , DOCTOR GETS MAIL AND CAN VIEW . when PMR report is not attached before 4:00 pm the remainder email will send to the 	patient to attach the PMR report.
+
+	7) prescription can be added by the doctor after the appointment that can be view by the particular patient.
+	
+	8) Admin can upload Excel with Doctor info and can download the EXCEL with correct datas and aslo INCORRECT DATAS. 
+	
+	9) Admin can get register Doctor records , admin records ,
+	
+	10) Feedbacks can be sent by Patients to particular doctor and also for common (HOSPITAL). If feedback is sent for DOCTOR , he only can view and respond to the feedback. 
+	    
+	     --> If, feedack is sent Comman, ADMIN can veiw and respond to it.
+	     
+	11 ) 	LOGIN /LOGOUT--> PATIENT,ADMIN, DOCTOR
+	
+		SIGNUP --> PATIENT
+		
+	12)   CHANGE PASSWORD, FORGOT PASSWORD -> PATIENT,ADMIN, DOCTOR
+
+	

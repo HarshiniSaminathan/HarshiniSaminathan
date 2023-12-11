@@ -9,15 +9,23 @@ from app.models.likeModel import Like
 from app.models.commentsModel import Comments
 from app.models.hashtagModel import Hashtag
 from datetime import datetime, timedelta
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 
 def check_email_existence(emailid):
     return User.objects(emailid=emailid).first() is not None
 
+
 def check_postid(postid):
     return Post.objects(id=postid).first() is not None
 
+import hashlib
+
+def hash_password(password):
+   password_bytes = password.encode('utf-8')
+   hash_object = hashlib.sha256(password_bytes)
+   return hash_object.hexdigest()
 
 def check_username_existence(username):
     return User.objects(username=username,status='ACTIVE').first() is not None
@@ -29,7 +37,7 @@ def insert_user(emailid, password, username, fullname, role, status,accountType)
     current_time = datetime.utcnow()
     user = User(
         emailid=emailid,
-        password=password,
+        password=hash_password(password),
         username=username,
         fullname=fullname,
         role=role,
@@ -41,7 +49,8 @@ def insert_user(emailid, password, username, fullname, role, status,accountType)
 
 def check_login(emailid, password):
     try:
-        user = User.objects(emailid=emailid, password=password).first()
+        hashed_password = hash_password(password)
+        user = User.objects(emailid=emailid,password=hashed_password).first()
         return user
     except Exception as e:
         print(f"Error in check_login: {e}")
@@ -51,6 +60,15 @@ def add_profile(emailid,filename,profileName,Bio):
     userprofile = UserProfile(emailid=emailid,profileImage=filename,profileName=profileName,bio=Bio)
     userprofile.save()
 
+def update_password(Emailid,newpassword):
+    hashed_password = hash_password(newpassword)
+    user=User.objects(emailid=Emailid).first()
+    if user:
+        user.password=hashed_password
+        user.save()
+        return True
+    else:
+        return False
 
 def updateSessionCode(emailid, session_code):
     try:
@@ -84,11 +102,11 @@ def deleteSession(email):
 
 def addPost(emailid,postType,filename,caption,tagUsername,status):
     created_at = datetime.utcnow()
-    user= Post(emailid=emailid,postType=postType,post=str(filename),caption=caption,tagUsername=tagUsername,created_at=created_at,status=status)
+    user= Post(emailid=emailid,postType=postType,post=str(filename),
+               caption=caption,tagUsername=tagUsername,created_at=created_at,status=status)
     if user:
         user.save()
         return user
-
 
 
 def delete_Post(emailid, postid):
@@ -536,6 +554,7 @@ def deleteMessage(senderEmailid,messageId):
     except Exception as e:
         print(f"Error in deleting messages: {e}")
         return False
+
 def Get_entire_messages(email_id, friend_id, page_header, per_page_header):
 
     required_fields = {'senderEmailid': None, 'content': None, 'created_at': None, 'read': None}
