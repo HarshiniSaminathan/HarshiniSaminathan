@@ -1,9 +1,11 @@
+import os
 import random
+from email.mime.image import MIMEImage
 
 from flask_mail import Message
 import schedule
 # from app.controller.patientController import check_for_PMR_beforeDay
-from run import mail
+from run import mail, UPLOAD_FOLDER
 
 import time
 sender='sharshini2003@gmail.com'
@@ -33,8 +35,24 @@ def send_email(to_email):
     message = Message(subject, sender=sender,recipients=[to_email], body=body)
     mail.send(message)
 
-global_otp= None
-global_Email=None
+def send_email_ad(emailId):
+    subject = 'An Apple a day Keep the DOCTOR away'
+    body = 'Healthy Remainder'
+    filepath = os.path.join(UPLOAD_FOLDER, 'ad_01.png')
+
+    message = Message(subject, sender=sender, recipients=[emailId], body=body)
+
+    from flask import current_app
+    with current_app.open_resource(filepath) as image_file:
+        message.attach("image.png", "image/png", image_file.read())
+
+    mail.send(message)
+
+
+
+
+global_otp = None
+global_Email = None
 def generate_otp():
     return str(random.randint(10000, 99999))
 

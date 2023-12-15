@@ -573,6 +573,21 @@ def check_for_PMR_beforeDay():
         print(f"Error: {e}")
         return jsonify({'message': f'{e}'})
 
+def sending_ad():
+    try:
+        emailid=UserTable.query.filter_by(role='PATIENT').all()
+        print(emailid)
+        from app.utils.emailSender import send_email_ad
+        for id in emailid:
+            send_email_ad(id.emailId)
+
+        print("sent")
+        return jsonify({'data' : 'Email sent successfully'})
+    except Exception as e:
+        print(f"Error: {e}")
+        return jsonify({'message': f'{e}'})
+
+
 
 
 

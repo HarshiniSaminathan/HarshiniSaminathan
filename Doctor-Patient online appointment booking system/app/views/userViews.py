@@ -1,12 +1,23 @@
-from flask import Blueprint
+from flask import Blueprint, current_app
+
 from app.service.userService import login_user, change_Password, forgot_Password, verify_Otp, change_Password_By_Otp, \
     log_Out, token_required
 
+
+
 loginapi_blueprint = Blueprint('loginapi', __name__, url_prefix='/api/login')
 
-@loginapi_blueprint.route("/",methods=['GET'])
+
+@loginapi_blueprint.route("/", methods=['GET'])
 def login():
     return login_user()
+
+    # cache = current_app.cache
+    # cached_data = cache.get('login_cache')
+    # if cached_data is None:
+    #     cached_data = login_user()
+    #     cache.set('login_cache', cached_data)
+    # return cached_data
 
 @loginapi_blueprint.route("/changePassword",methods=['PUT'])
 @token_required(['PATIENT','ADMIN','DOCTOR'])
@@ -32,7 +43,8 @@ def changePasswordByOtp():
 def logOut():
     return log_Out()
 
-
+# cleind_id : 21920326359-mka2s9i54i9p4siurtosdeikg5ahp9r4.apps.googleusercontent.com
+# client_secreat : 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
 
 
 

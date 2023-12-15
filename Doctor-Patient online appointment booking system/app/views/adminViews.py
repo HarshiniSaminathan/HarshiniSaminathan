@@ -1,8 +1,13 @@
-from flask import Blueprint
+from flask import Blueprint,current_app
 
-from app.service.adminService import (register_doctor,response_For_Feedback,get_Register_Doctor_Records,get_All_Feedback,uploading_Doctor_Excel,
-                                      download_Errors_InExcel,download_Valid_InExcel,patient_Excel,
-                                      register_Admin,get_Register_Admin_Records,add_Slot_To_Doctors,update_Slots_status)
+from app.controller.patientController import sending_ad
+from app.service.adminService import (register_doctor, response_For_Feedback, get_Register_Doctor_Records,
+                                      get_All_Feedback, uploading_Doctor_Excel,
+                                      download_Errors_InExcel, download_Valid_InExcel, patient_Excel,
+
+                                      register_Admin, get_Register_Admin_Records, add_Slot_To_Doctors,
+                                      update_Slots_status, store_Records_Of_CSVIn_DB, download_csv, data_analytics,
+                                      uploading_Ads)
 from app.service.userService import token_required
 
 adminapi_blueprint = Blueprint('adminapi', __name__, url_prefix='/api/admin')
@@ -15,7 +20,12 @@ def registerDoctor():
 @adminapi_blueprint.route("/getRegisterDoctorRecords",methods=['GET'])
 @token_required(['ADMIN','DOCTOR','PATIENT'])
 def getRegisterDoctorRecords():
-    return get_Register_Doctor_Records()
+    cache = current_app.cache
+    cached_data = cache.get('getRegisterDoctorRecords_cache')
+    if cached_data is None:
+        cached_data = get_Register_Doctor_Records()
+        cache.set('getRegisterDoctorRecords_cache', cached_data)
+    return cached_data
 
 @adminapi_blueprint.route("/registerAdmin",methods=['POST'])
 @token_required(['ADMIN'])
@@ -51,6 +61,10 @@ def responseForFeedback():
 def uploadingDoctorExcel():
     return uploading_Doctor_Excel()
 
+@adminapi_blueprint.route("uploadingAds",methods=['POST'])
+def uploadingAds():
+    return uploading_Ads()
+
 @adminapi_blueprint.route("downloadErrorsInExcel",methods=['GET'])
 def downloadErrorsInExcel():
     return download_Errors_InExcel()
@@ -63,3 +77,17 @@ def downloadValidInExcel():
 def patientExcel():
     return patient_Excel()
 
+@adminapi_blueprint.route("storeRecordsOfCSVInDB",methods=['POST'])
+def storeRecordsOfCSVInDB():
+    return store_Records_Of_CSVIn_DB()
+
+@adminapi_blueprint.route('/download_csv',methods=['GET'])
+def downloadcsv():
+    return download_csv()
+@adminapi_blueprint.route("/data_analytics", methods=["GET"])
+def dataAnalytics():
+    return data_analytics()
+
+@adminapi_blueprint.route("/sending_ad",methods=['POST'])
+def sendingAd():
+    return sending_ad()

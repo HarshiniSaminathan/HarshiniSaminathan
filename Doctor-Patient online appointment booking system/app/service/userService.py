@@ -129,6 +129,7 @@ def change_Password():
         NewPassword = data['NewPassword']
         if check_email_existence(EmailId):
             if OldPasswordExists(EmailId, OldPassword):
+                print(OldPasswordExists(EmailId, OldPassword))
                 try:
                     from app.controller.userController import change_Password
                     change_Password(EmailId, NewPassword)
