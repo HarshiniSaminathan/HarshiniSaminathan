@@ -105,6 +105,7 @@ def googleCallback():
         return redirect(url_for("home"))
     except Exception as e:
         return f"Error: {str(e)}"
+
 @app.route("/logout")
 def logout():
     session.pop("user", None)
@@ -148,8 +149,6 @@ app.register_blueprint(adminapi_blueprint)
 app.register_blueprint(patientapi_blueprint)
 app.register_blueprint(doctorapi_blueprint)
 app.register_blueprint(loginapi_blueprint)
-
-
 
 
 # @scheduler.task('cron', id='check_for_PMR', hour=16, minute=00)  # 4:00 PM

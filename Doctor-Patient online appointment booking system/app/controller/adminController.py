@@ -34,8 +34,6 @@ def insert_role_password(EmailId,password,role):
 
 
 
-from flask_sqlalchemy import Pagination
-
 def fetch_doctor_records(page, per_page):
     query = DoctorTable.query
     doctor_info = query.paginate(page=page, per_page=per_page)
@@ -72,6 +70,22 @@ def insert_admin(adminName, adminPhoneNumber, adminAddress, emailId):
         emailId=emailId
     )
     add_in_entity(new_admin)
+
+def emailSendAsTableFormat():
+    query = DoctorTable.query
+    items = query.all()
+    data = []
+    for doctor in items:
+        data.append({
+            "Doctor Name": doctor.doctorName,
+            "Phone Number": doctor.doctorPhoneNumber,
+            "Address": doctor.doctorAddress,
+            "Experience": doctor.doctorExperience,
+            "Specialization": doctor.doctorSpecialization,
+            "Email ID": doctor.doctorEmailId
+        })
+
+    return data
 
 
 def fetch_admin_records(page, per_page):

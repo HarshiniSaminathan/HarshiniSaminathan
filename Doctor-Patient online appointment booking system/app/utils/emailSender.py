@@ -4,6 +4,9 @@ from email.mime.image import MIMEImage
 
 from flask_mail import Message
 import schedule
+from tabulate import tabulate
+
+from app.controller.adminController import emailSendAsTableFormat
 # from app.controller.patientController import check_for_PMR_beforeDay
 from run import mail, UPLOAD_FOLDER
 
@@ -39,17 +42,38 @@ def send_email_ad(emailId):
     subject = 'An Apple a day Keep the DOCTOR away'
     body = 'Healthy Remainder'
     filepath = os.path.join(UPLOAD_FOLDER, 'ad_01.png')
-
     message = Message(subject, sender=sender, recipients=[emailId], body=body)
 
     from flask import current_app
     with current_app.open_resource(filepath) as image_file:
         message.attach("image.png", "image/png", image_file.read())
+    mail.send(message)
 
+def emailSendAsTable():
+    data = emailSendAsTableFormat()
+    subject = 'Doctor info - Tabulation'
+    body = generate_html_table(data)
+    message = Message(subject, sender=sender, recipients=["sharshini2003@gmail.com"], html=body)
     mail.send(message)
 
 
+def generate_html_table(data):
+    table_html = "<table border='1'>"
+    headers = data[0].keys() if data else []
 
+    table_html += "<tr>"
+    for header in headers:
+        table_html += f"<th>{header}</th>"
+    table_html += "</tr>"
+
+    for row in data:
+        table_html += "<tr>"
+        for value in row.values():
+            table_html += f"<td>{value}</td>"
+        table_html += "</tr>"
+
+    table_html += "</table>"
+    return table_html
 
 global_otp = None
 global_Email = None

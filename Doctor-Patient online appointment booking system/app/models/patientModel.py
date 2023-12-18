@@ -13,4 +13,3 @@ class PatientTable(db.Model):
     user = relationship('UserTable', back_populates='patient', uselist=False) #removed.db
     appointments = db.relationship("appointmentTable", back_populates="patient")  #.db added # one-many
     feedback_sessions = db.relationship('FeedbackSession', back_populates='patient')
-

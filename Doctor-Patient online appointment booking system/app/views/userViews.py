@@ -42,12 +42,3 @@ def changePasswordByOtp():
 @loginapi_blueprint.route('logOut',methods=['GET'])
 def logOut():
     return log_Out()
-
-# cleind_id : 21920326359-mka2s9i54i9p4siurtosdeikg5ahp9r4.apps.googleusercontent.com
-# client_secreat : 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
-
-
-
-
-
-

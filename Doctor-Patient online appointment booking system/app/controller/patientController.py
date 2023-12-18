@@ -236,8 +236,6 @@ def patient_appointments(patientEmailId, page, per_page):
         totalRecors = None
         return results, totalRecors
 
-
-
 def countOfAppointmentsPerDay(patientEmailId, page, per_page):
     patient_id = findPatientId(patientEmailId)
     current_date = datetime.now().date()
@@ -263,7 +261,6 @@ def countOfAppointmentsPerDay(patientEmailId, page, per_page):
             }
             for appointment_date, appointment_count in appointments
         ]
-
         return result, total_records
     else:
         return [{"data": None}]
@@ -271,7 +268,7 @@ def countOfAppointmentsPerDay(patientEmailId, page, per_page):
 
 def doctorForSpecialization_exists(doctorSpecialization):
     count=DoctorTable.query.filter_by(doctorSpecialization=doctorSpecialization).count()
-    if count>0:
+    if count > 0:
         return True
     else:
         return False
@@ -324,7 +321,6 @@ def check_for_slotsPending(doctorEmailId,appointmentDate):
         return data
     else:
         return [{"data": None}]
-
 
 def check_for_slotsRejected(doctorEmailId,appointmentDate):
     doctorId=findDoctorId(doctorEmailId)
@@ -387,7 +383,7 @@ def check_appointmentAccepted(doctorEmailId,patientEmailId,appointmentDate,appoi
     patientId=findPatientId(patientEmailId)
     count=appointmentTable.query.filter_by(doctorId=doctorId,patientId=patientId,appointmentStatus=appointmentStatus,appointmentDate=appointmentDate,appointmentTime=appointmentTime).count()
     print(count)
-    if count >0:
+    if count > 0 :
         return True
     else:
         return False
@@ -586,6 +582,9 @@ def sending_ad():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({'message': f'{e}'})
+
+
+
 
 
 

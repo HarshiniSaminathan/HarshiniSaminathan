@@ -159,7 +159,6 @@ def count_appointments(patientEmailId):
             }
             for appointment in count_appointments_result
         ]
-
         return success_response({"Appointments-Count-With-DATE": result,'Pagination':total_page})
     except Exception as e:
         print(f"Error: {e}")
@@ -295,6 +294,7 @@ def view_prescription():
         patientEmailId = data['patientEmailId']
         appointmentDate = data['appointmentDate']
         appointmentTime = data['appointmentTime']
+
         if check_email_existence(doctorEmailId):
             if check_email_existence(patientEmailId):
                 if check_appointmentAccepted(doctorEmailId, patientEmailId, appointmentDate, appointmentTime):

@@ -69,7 +69,7 @@ def log_Out():
                 print("session-CODE-LOGOUT", session_code)
                 if email:
                     if check_emailhas_sessionCode(email,session_code):
-                        deleteSession(email)    # session Code delelte in the USER TABLE
+                        deleteSession(email)    # session Code delete in the USER TABLE
                         return success_response({"message": "Logout successful"})
                     else:
                         return failure_response(statuscode='401', content='Invalid session Code')

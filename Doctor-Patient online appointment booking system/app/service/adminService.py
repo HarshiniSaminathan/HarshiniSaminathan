@@ -13,9 +13,12 @@ from app.controller.patientController import findPatientId
 from app.models.CommerceCSVModel import CommerceCSVModel
 from app.response import failure_response, success_response
 from app.controller.userController import check_email_existence
-from app.controller.adminController import (insert_doctor, insert_role_password, updateSlots, fetch_doctor_records, addFeedbackResponse,get_feedbacks,fetch_patient_records,
-                                            get_total_doctor,insert_admin,fetch_admin_records,get_total_admin, insert_slot,check_slot_inserted)
+from app.controller.adminController import (insert_doctor, insert_role_password, updateSlots, fetch_doctor_records,
+                                            addFeedbackResponse, get_feedbacks, fetch_patient_records,
+                                            get_total_doctor, insert_admin, fetch_admin_records, get_total_admin,
+                                            insert_slot, check_slot_inserted)
 from app.utils.commanUtils import add_in_entity
+
 
 
 def register_doctor():
@@ -490,3 +493,13 @@ def data_analytics():
             return failure_response(statuscode='409', content='Unable to read CSV file')
     except Exception as e:
         return failure_response(statuscode='409', content=str(e))
+
+
+def table_Data_In_Email():
+    from app.utils.emailSender import emailSendAsTable
+    try:
+        emailSendAsTable()
+        return success_response('Email sent successfully')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content='An unexpected error occurred.')
