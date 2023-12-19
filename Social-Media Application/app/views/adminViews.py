@@ -24,4 +24,3 @@ def getInactivePosts():
     return get_Inactive_Posts()
 
 
-

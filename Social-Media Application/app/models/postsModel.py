@@ -10,10 +10,3 @@ class Post(db.Document):
     created_at = db.DateTimeField(required=True)
     status = db.StringField(required=True)
     tagUsername = db.ListField()
-
-
-
-
-
-
-

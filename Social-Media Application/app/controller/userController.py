@@ -249,7 +249,6 @@ def Get_friends_profile(followerEmailid, page, per_page):
     return None,int(0),int(0),int(0),int(0)
 
 
-
 def Get_friends_post(emailid, page, per_page):
 
     required_fields = {'id': None, 'emailid': None, 'postType': None, 'post': None, 'caption': None, 'created_at': None,
@@ -294,8 +293,8 @@ def Get_friends_post(emailid, page, per_page):
                 profile.append(post_info)
                 profile.append({"Like-count": count, "Comment-Count": comment_count})
             return profile, int(total_pages)
-
     return None, int(0)
+
 
 def Get_Particular_friends_post(emailid, page, per_page):
     required_fields = {'emailid': None, 'postType': None, 'post': None, 'caption': None, 'created_at': None,

@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import hashlib
+import uuid
 from functools import wraps
 
 from flask import request, session
@@ -27,6 +28,8 @@ from app.models.likeModel import Like
 from app.response import failure_response, success_response
 from config import SECRET_KEY
 
+
+
 def generate_session_code(user_info):
     user_info_str = str(user_info)
     hash_object = hashlib.sha256(user_info_str.encode())
@@ -35,6 +38,16 @@ def generate_session_code(user_info):
 
 def generate_jwt_token(user_info):
     expiration_time = datetime.utcnow() + timedelta(hours=1)
+    payload = {
+        'EmailId': user_info['EmailId'],
+        'Role': user_info['Role'],
+        'exp': expiration_time,
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+    return token
+
+def generate_refresh_token(user_info):
+    expiration_time = datetime.utcnow() + timedelta(hours=24)
     payload = {
         'EmailId': user_info['EmailId'],
         'Role': user_info['Role'],
@@ -69,7 +82,6 @@ def user_Sign_Up():
         print(f"Error: {e}")
         return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
 
-
 def login():
     try:
         data = request.get_json()
@@ -85,14 +97,18 @@ def login():
             if user:
                 role = user.role
                 user_info = {'EmailId': emailid, 'Role': role}
+
                 jwt_token = generate_jwt_token(user_info)
                 jwt_token_str = jwt_token.decode('utf-8')
+
+                refresh_token = generate_refresh_token(user_info)
+                refresh_token_str = refresh_token.decode('utf-8')
 
                 if jwt_token_str:
                     session_code = generate_session_code(user_info={'EmailId': emailid, 'Role': role})
                     print("session-CODE-LOGIN", session_code)
                     updateSessionCode(emailid, session_code)  # session Code add in the USER TABLE
-                    return success_response({"data": role, "token": jwt_token_str})
+                    return success_response({"data": role, "token": jwt_token_str, "Refresh-Token":refresh_token_str})
                 else:
                     return failure_response(statuscode='400', content='User Invalid')
             else:
@@ -134,29 +150,47 @@ def token_required(allowed_roles):
         @wraps(func)
         def wrapper(*args, **kwargs):
             token = request.headers.get('Authorization')
-            if not token:
-                return failure_response(statuscode='401', content='Token is missing')
+            refresh_token = request.headers.get('Refresh-Token')  # Include a separate header for refresh token
+
+            if not token or not refresh_token:
+                return failure_response(statuscode='401', content='Token or Refresh-Token is missing')
+
             try:
                 payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
                 EmailId = payload['EmailId']
                 role = payload['Role']
-
                 session_code = generate_session_code(user_info={'EmailId': EmailId, 'Role': role})
                 print("session-CODE-API-VERIFY", session_code)
-
                 if role not in allowed_roles:
                     return failure_response(statuscode='403', content=f'Access restricted. User is not authorized')
 
-                if not check_emailhas_sessionCode(EmailId,session_code):   # session Code verifying  in the USER TABLE
-
+                if not check_emailhas_sessionCode(EmailId, session_code):
                     return failure_response(statuscode='401', content='Token has been invalidated (logged out)')
 
             except jwt.ExpiredSignatureError:
-                return failure_response(statuscode='401', content='Token has expired')
+                try:
+                    refresh_payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=['HS256'])
+
+                    expiration_time = datetime.utcnow() + timedelta(hours=1)
+                    new_access_token = generate_jwt_token({
+                        'EmailId': refresh_payload['EmailId'],
+                        'Role': refresh_payload['Role'],
+                        'exp':expiration_time
+                    }).decode('utf-8')
+
+                    return success_response({"Access_token": new_access_token})
+                except jwt.ExpiredSignatureError:
+                    return failure_response(statuscode='401', content='Refresh token has expired')
+                except jwt.InvalidTokenError:
+                    return failure_response(statuscode='401', content='Invalid refresh token')
+
             except jwt.InvalidTokenError:
                 return failure_response(statuscode='401', content='Invalid token')
+
             return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 def addProfile():
@@ -190,6 +224,28 @@ def addProfile():
         print(f"Error: {e}")
         return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
 
+from PIL import Image, ImageOps, ExifTags
+def rotate_image(image):
+    try:
+        for orientation in ExifTags.TAGS.keys():
+            if ExifTags.TAGS[orientation] == 'Orientation':
+                break
+        exif_data = dict(image._getexif().items())
+        print(exif_data[orientation])
+
+        if exif_data[orientation] == 3 :
+            image = image.rotate(180, expand=True)
+
+        elif exif_data[orientation] == 6 :
+            image = image.rotate(270, expand=True)
+
+        elif exif_data[orientation] == 8 :
+            image = image.rotate(90, expand=True)
+
+    except (AttributeError, KeyError, IndexError):
+        pass
+    return image
+
 def add_post():
     try:
         token = request.headers.get('Authorization')
@@ -197,34 +253,56 @@ def add_post():
             try:
                 payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
                 emailid = payload.get('EmailId')
-                from run import UPLOAD_FOLDER
                 file = request.files['file']
                 form_data = request.form.get('data')
                 try:
                     data = json.loads(form_data)
                 except json.JSONDecodeError:
                     return failure_response(statuscode='400', content='Invalid JSON data')
+
                 postType = data['postType']
                 caption = data['caption']
                 tagUsername = data['tagUsername']
                 status = 'INACTIVE'
+
                 if check_email_For_Username(emailid):
                     for user in tagUsername:
                         if not check_username_existence(user):
-                            return failure_response(statuscode='409', content=f'TagUserName:"{user}" does not exists/INACTIVE')
-                        filename = secure_filename(file.filename)
-                        file.save(os.path.join(UPLOAD_FOLDER, filename))
-                        if addPost(emailid,postType,filename,caption,tagUsername,status):
-                            return success_response("Post Added Successfully")
-                        return failure_response(statuscode='409', content=f'Post Addition ERROR')
-                return failure_response(statuscode='409', content=f'EmailId:{emailid} does not exists/INACTIVE')
+                            return failure_response(statuscode='409', content=f'TagUserName:"{user}" does not exist/INACTIVE')
+
+                    unique_key = str(uuid.uuid4())
+                    filename = secure_filename(file.filename)
+                    file_extension = os.path.splitext(filename)[1]
+                    unique_filename = f"{unique_key}{file_extension}"
+                    from run import UPLOAD_FOLDER
+                    file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+                    file.save(file_path)
+                    image = Image.open(file_path)
+                    image = rotate_image(image)
+                    max_width = 200
+                    print(image.width)
+                    if image.width > max_width:
+                        aspect_ratio = max_width / float(image.width)
+                        height = int(float(image.height) * float(aspect_ratio))
+                        image = image.resize((max_width, height), Image.ANTIALIAS)
+
+                    processed_image_path = os.path.join(UPLOAD_FOLDER, 'processed_' + unique_filename)
+                    image.save(processed_image_path)
+
+                    File_Name = unique_filename
+                    addPost(emailid, postType, File_Name, caption, tagUsername, status)
+                    return success_response("Post Added Successfully")
+                return failure_response(statuscode='409', content=f'EmailId:{emailid} does not exist/INACTIVE')
+
             except Exception as e:
                 print(f"Error: {e}")
-                return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+                return failure_response(statuscode='500', content=f'An unexpected error occurred, {e}.')
+
         return failure_response(statuscode='409', content='Token is missing')
+
     except Exception as e:
         print(f"Error: {e}")
-        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+        return failure_response(statuscode='500', content=f'An unexpected error occurred, {e}.')
 
 
 def deletePost():
@@ -1136,4 +1214,3 @@ def change_Password_By_Otp():
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
-

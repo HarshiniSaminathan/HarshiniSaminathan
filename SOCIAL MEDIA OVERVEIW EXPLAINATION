@@ -1,46 +1,52 @@
-  1) USER can signup , login (JWT TOKEN GENERATED, SESSION CODE ADDED IN DB ) , logout ( SESSION CODE REMOVED FROM THE DB)
-  
-  2) At each API calls, TOKEN is required with valid email, role and session code 
-  
-  3 )  USER API 'S :
-  	addProfile , 
-  	update profile,
-  	add_post , 
-  	del_post ,
-  	request To Follow , 
-  	respond to request , 
-  	unFollowFriend ,
-  	veiw_Profile,
-  	following_List,
-  	Followers_List,
-  	view_Friends_Profile,
-  	view_Post,
-  	view_Post_Of_ParticularFriend,
-  	block_Friend,
-  	unblock_Friend,
-  	block_list,
-  	filter_By_username,
-  	like_The_Post,
-  	unlike_The_Post,
-  	search_Username,
-  	post_Comments,
-  	Reply_For_Comments,
-  	delete_Comments,
-  	post_Messages,
-  	delete_Message,
-  	get_Messages_BY_Emailid,
-  	update_Read_Status,
-  	get_Post_By_Hashtags,
-  	change_Password,
-  	forgotPassword
-  	
-  4 ) ADMIN API 'S :
-  
-    	get_All_InactiveUser,
-    	activating_The_Users,
-    	get_All_ActivatedUsers,
-    	activating_The_Post,
-    	get_Inactive_Posts
-    	
-  	
-  	
+		  1) USER can signup (INACTIVE) , 
+		  
+		  login (JWT TOKEN GENERATED, SESSION CODE ADDED IN DB ) , 
+		  
+		  logout ( SESSION CODE REMOVED FROM THE DB)
+		  
+		  
+		  2) At each API calls, TOKEN is required with valid email, role and session code 
+		  
+		  3 )  USER API 'S :
+		  
+		  	addProfile,
+		  	update profile,
+		  	add_post, 
+		  	del_post,
+		  	request To Follow , 
+		  	respond to request, 
+		  	unFollowFriend ,
+		  	veiw_Profile,
+		  	following_List,
+		  	Followers_List,
+		  	view_Friends_Profile,
+		  	view_Post,
+		  	view_Post_Of_ParticularFriend,
+		  	block_Friend,
+		  	unblock_Friend,
+		  	block_list,
+		  	filter_By_username,
+		  	like_The_Post,
+		  	unlike_The_Post,
+		  	search_Username,
+		  	post_Comments,
+		  	Reply_For_Comments,
+		  	delete_Comments,
+		  	post_Messages,
+		  	delete_Message,
+		  	get_Messages_BY_Emailid,
+		  	update_Read_Status,
+		  	get_Post_By_Hashtags,
+		  	change_Password,
+		  	forgotPassword
+		  	
+		  4 ) ADMIN API 'S :
+		  
+		    	get_All_InactiveUser,
+		    	activating_The_Users, (LOGIN)
+		    	get_All_ActivatedUsers,
+		    	activating_The_Post, (VIEW POST)
+		    	get_Inactive_Posts
+		    	
+		  	
+		  	

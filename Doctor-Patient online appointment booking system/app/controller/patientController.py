@@ -501,7 +501,6 @@ def get_Prescription(patientEmailId, doctorEmailId, page, per_page):
         for doctorName, doctorSpecialization, doctorEmailId, appointment_date, appointment_time in items:
             appointmentId = findAppointmnetId(doctorEmailId, patientEmailId, appointment_date, appointment_time)
             prescription_records = PrescriptionTable.query.filter_by(appointmentId=appointmentId).all()
-
             prescription_for_appointment = []
             if prescription_records:
                 for medical_record in prescription_records:
@@ -576,7 +575,6 @@ def sending_ad():
         from app.utils.emailSender import send_email_ad
         for id in emailid:
             send_email_ad(id.emailId)
-
         print("sent")
         return jsonify({'data' : 'Email sent successfully'})
     except Exception as e:

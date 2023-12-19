@@ -11,4 +11,3 @@ class User(db.Document):
     accountType =db.StringField(required=True)
     created_at = db.DateTimeField(required=True)
     sessionCode = db.StringField()
-
