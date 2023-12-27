@@ -21,63 +21,59 @@ def guess_a_number():
     clue=clues(GeneratedNumber)
     return success_response({'CLUES':clue,'message': 'Guess A Number From 1 to 100', 'Score': f'Your Current Score: {TotalScore}'})
 
+def specialClue1(GeneratedNumber):
+    LastNumber = int(GeneratedNumber)%10
+    return f'Number ends with {LastNumber}'
 
-def clue1(GeneratedNumber):
-    if int(GeneratedNumber)>= 75 :
+def clue1(GeneratedNumber,Number):
+    if int(GeneratedNumber)>= 75:
+        if int(Number) >= 75 :
+            return specialClue1(GeneratedNumber)
         return 'Number will be 100<=75'
-    if int(GeneratedNumber)>= 50 :
+    if int(GeneratedNumber)>= 50:
+        if int(Number)>=50:
+            return specialClue1(GeneratedNumber)
         return 'Number will be 75<=50'
     if int(GeneratedNumber)>= 25 :
+        if int(Number)>=25:
+            return specialClue1(GeneratedNumber)
         return 'Number will be 50<= 25'
     if int(GeneratedNumber) >= 10:
+        if int(Number)>=10:
+            return specialClue1(GeneratedNumber)
         return 'Number will be 25<=10'
     if int(GeneratedNumber)>=0:
+        if int(Number)>=0:
+            return specialClue1(GeneratedNumber)
         return 'Number will be from 1 to 9'
 
 
 def clue2(GeneratedNumber):
     if int(GeneratedNumber) > 1:
         if (int(GeneratedNumber) % 2 == 0 and int(GeneratedNumber) != 2) or (int(GeneratedNumber) % 3 == 0 and int(GeneratedNumber) != 3) or (int(GeneratedNumber) % 5 == 0 and int(GeneratedNumber) != 5):
-            if int(GeneratedNumber) % 2 == 0:
-                return 'Divisible By 2'
-            if int(GeneratedNumber) % 3 == 0:
-                return 'Divisible By 3'
-            if int(GeneratedNumber) % 4 == 0:
-                return 'Divisible By 4'
-            if int(GeneratedNumber) % 5 == 0:
-                return 'Divisible By 5'
-            if int(GeneratedNumber) % 6 == 0:
-                return 'Divisible By 6'
-            if int(GeneratedNumber) % 7 == 0:
-                return 'Divisible By 7'
-            if int(GeneratedNumber) % 8 == 0:
-                return 'Divisible By 8'
-            if int(GeneratedNumber) % 9 == 0:
-                return 'Divisible By 9'
             if int(GeneratedNumber) % 10 == 0:
                 return 'Divisible By 10'
+            if int(GeneratedNumber) % 9 == 0:
+                return 'Divisible By 9'
+            if int(GeneratedNumber) % 8 == 0:
+                return 'Divisible By 8'
+            if int(GeneratedNumber) % 7 == 0:
+                return 'Divisible By 7'
+            if int(GeneratedNumber) % 6 == 0:
+                return 'Divisible By 6'
+            if int(GeneratedNumber) % 5 == 0:
+                return 'Divisible By 5'
+            if int(GeneratedNumber) % 4 == 0:
+                return 'Divisible By 4'
+            if int(GeneratedNumber) % 3 == 0:
+                return 'Divisible By 3'
+            if int(GeneratedNumber) % 2 == 0:
+                return 'Divisible By 2'
         else:
-            print(f"The number {GeneratedNumber} is the prime number. ")
+            return 'Prime Number'
 
     else:
-        if int(GeneratedNumber) % 2 == 0:
-            return 'Divisible By 2'
-        if int(GeneratedNumber) % 3 == 0:
-            return 'Divisible By 3'
-        if int(GeneratedNumber) % 4 == 0:
-            return 'Divisible By 4'
-        if int(GeneratedNumber) % 5 == 0:
-            return 'Divisible By 5'
-        if int(GeneratedNumber) % 6 == 0:
-            return 'Divisible By 6'
-        if int(GeneratedNumber) % 7 == 0:
-            return 'Divisible By 7'
-        if int(GeneratedNumber) % 8 == 0:
-            return 'Divisible By 8'
-        if int(GeneratedNumber) % 9 == 0:
-            return 'Divisible By 9'
-        if int(GeneratedNumber) % 10 == 0:
-            return 'Divisible By 10'
+        return 'Not a Prime Number'
 
 
 def clue3(GeneratedNumber,Number):
@@ -98,7 +94,7 @@ def guessed_number():
     else:
         while TotalScore > 0:
             if TotalScore == 100:
-                clues = clue1(GeneratedNumber)
+                clues = clue1(GeneratedNumber,Number)
                 TotalScore -= 25
                 return failure_response({'CLUES':clues,'message': 'You entered an incorrect Number', 'Score': f'Your Current Score: {TotalScore}'})
             if TotalScore == 75:
