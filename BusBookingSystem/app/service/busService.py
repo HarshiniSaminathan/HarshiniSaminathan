@@ -1,6 +1,7 @@
 from flask import request
 
-from app.controller.busController import check_busInfo_existence, insert_businfo
+from app.controller.busController import check_busInfo_existence, insert_businfo, bus_no_exists, \
+    check_seats_availability, bus_id_exists
 from app.response import failure_response, success_response
 
 
@@ -28,4 +29,29 @@ def add_bus_Info():
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def seat_Availability_For_BusNo():
+    try:
+        data = request.get_json()
+        required_fields = ['bus_id', 'bookingDate']
+        if required_fields:
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+            bus_id = data['bus_id']
+            bookingDate = data['bookingDate']
+            if bus_id_exists(bus_id):
+                Total_seats,available_seats_count=check_seats_availability(bus_id,bookingDate)
+                if int(available_seats_count) > 0 :
+                    return success_response({'Total_Seats':Total_seats,'available_seats_count':available_seats_count})
+                else:
+                    return failure_response('500','No available seats')
+            else:
+                return failure_response('500','Bus Not Found')
+        return failure_response(statuscode='409', content='required_fields Not found')
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+
 
