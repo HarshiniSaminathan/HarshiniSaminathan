@@ -3,7 +3,8 @@ from datetime import datetime
 from flask import request
 
 from app.controller.busController import seat_book, bus_id_exists, seat_availability
-from app.controller.userController import check_email_existence, insert_user, save_passenger
+from app.controller.userController import check_email_existence, insert_user, save_passenger, Travelled_Bookings, \
+    Upcoming_Bookings
 from app.models.bookings import Bookings
 from app.models.passengerInfo import PassengerDetails
 from app.response import failure_response, success_response
@@ -101,3 +102,45 @@ def bus_booking():
 def get_seats_selection(passengers_info):
     seats_selection = [passenger_info.get('seats') for passenger_info in passengers_info]
     return seats_selection
+
+def users_Travelled_Bookings():
+    try:
+        data=request.get_json()
+        required_fields = ['emailid']
+        if required_fields:
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+            emailid = data['emailid']
+            if check_email_existence(emailid):
+                travelled_bookings = Travelled_Bookings(emailid)
+                if len(travelled_bookings)>0:
+                    return success_response({'travelled_bookings':travelled_bookings})
+                return failure_response('409','NO HISTORY OF TRAVEL')
+            return failure_response(statuscode='409', content='Email id does not exists')
+        return failure_response(statuscode='409', content='required_fields Not found')
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')
+
+def users_Upcoming_Bookings():
+    try:
+        data=request.get_json()
+        required_fields = ['emailid']
+        if required_fields:
+            for field in required_fields:
+                if field not in data or not data[field]:
+                    return failure_response(statuscode='400', content=f'Missing or empty field: {field}')
+            emailid = data['emailid']
+            if check_email_existence(emailid):
+                travelled_bookings = Upcoming_Bookings(emailid)
+                if len(travelled_bookings)>0:
+                    return success_response({'travelled_bookings':travelled_bookings})
+                return failure_response('500','NO UPCOMING BOOKINGS')
+            return failure_response(statuscode='409', content='Email id does not exists')
+        return failure_response(statuscode='409', content='required_fields Not found')
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return failure_response(statuscode='500', content=f'An unexpected error occurred ,{e}.')

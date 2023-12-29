@@ -1,3 +1,5 @@
+from app.models.bookings import Bookings
+from app.models.busInfoModel import BusInfo
 from app.models.userModel import User
 from app.models.passengerInfo import PassengerDetails
 import datetime
@@ -34,3 +36,56 @@ def save_passenger(seats_selection,passenger_names,gender,age,id_proof_type,id_p
         )
     passenger_details.save()
     return passenger_details
+
+def Travelled_Bookings(emailid):
+    current_datetime = datetime.utcnow().isoformat()
+    bookings = Bookings.objects(userId=emailid, bookingDate__lt=current_datetime).all()
+
+    print(bookings)
+    travelled_bookings = []
+
+    for booking in bookings:
+        bus_info = BusInfo.objects(id=booking.busId).first()
+
+        if bus_info:
+            bus_details = {
+                'busNumber': bus_info.busNumber,
+                'routeFrom': bus_info.routeFrom,
+                'routeTo': bus_info.routeTo,
+                'arriveTime': bus_info.arriveTime,
+                'departureTime': bus_info.departureTime,
+            }
+            booking_details = {
+                'TotalAmount': booking.TotalAmount,
+                'no_of_passengers_booked': len(booking.passengerDetailsIds),
+                'bookingDate': booking.bookingDate,
+            }
+            travelled_booking = {**bus_details, **booking_details}
+            travelled_bookings.append(travelled_booking)
+
+    return travelled_bookings
+
+def Upcoming_Bookings(emailid):
+    current_datetime = datetime.utcnow().isoformat()
+    bookings = Bookings.objects(userId=emailid, bookingDate__gt=current_datetime).all()
+
+    travelled_bookings = []
+    for booking in bookings:
+        bus_info = BusInfo.objects(id=booking.busId).first()
+
+        if bus_info:
+            bus_details = {
+                'busNumber': bus_info.busNumber,
+                'routeFrom': bus_info.routeFrom,
+                'routeTo': bus_info.routeTo,
+                'arriveTime': bus_info.arriveTime,
+                'departureTime': bus_info.departureTime,
+            }
+            booking_details = {
+                'TotalAmount': booking.TotalAmount,
+                'no_of_passengers_booked': len(booking.passengerDetailsIds),
+                'bookingDate': booking.bookingDate,
+            }
+            travelled_booking = {**bus_details, **booking_details}
+            travelled_bookings.append(travelled_booking)
+    return travelled_bookings
