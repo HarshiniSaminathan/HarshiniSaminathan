@@ -5,6 +5,7 @@ from bson import ObjectId
 
 from app.models.busInfoModel import BusInfo
 from app.models.bookings import Bookings
+from app.models.passengerInfo import PassengerDetails
 def check_busInfo_existence(busNumber,arriveTime,departureTime):
     return BusInfo.objects(busNumber=busNumber,arriveTime=arriveTime,departureTime=departureTime).first() is not None
 
@@ -24,8 +25,19 @@ def insert_businfo(busNumber, capacity, routeFrom, routeTo,arriveTime,departureT
     )
     busInfo.save()
 
-def seat_availability(bus_id,seats_selection,bookingDate):
-    return Bookings.objects(bus_id=bus_id,seats_selection=seats_selection,bookingDate=bookingDate).first() is not None
+def seat_availability(bus_id, seats_selection, booking_date):
+    booking_info = Bookings.objects(busId=bus_id, bookingDate=booking_date).first()
+    if booking_info:
+        passenger_ids = booking_info.passengerDetailsIds
+
+        for passenger_id in passenger_ids:
+            passenger_details = PassengerDetails.objects(id=passenger_id).first()
+            if seats_selection in passenger_details.seats:
+                return False
+        return True
+
+    return True
+
 
 def seat_book(bus_id, emailid, contact_number, bookingDate, status, total_amount, ids):
     print(bus_id, emailid, contact_number, bookingDate, status, total_amount, ids,"controller")
@@ -37,8 +49,11 @@ def seat_book(bus_id, emailid, contact_number, bookingDate, status, total_amount
         bookingDate=bookingDate,
         contactNumber=contact_number,
         status=status,
-        TotalAmount=total_amount
+        TotalAmount=str(total_amount)
     )
     booking.save()
     Bookings.objects(id=booking.id).update_one(push__passengerDetailsIds=ids)
+
+def bus_id_exists(bus_id):
+    return BusInfo.objects(id=bus_id).first()
 
