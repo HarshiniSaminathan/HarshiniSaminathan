@@ -8,7 +8,6 @@ from app.service.patientService import (register_New_Patient,view_prescription,a
 patientapi_blueprint = Blueprint('patientapi', __name__, url_prefix='/api/patient')
 
 @patientapi_blueprint.route("/registerNewPatient",methods=['POST'])
-@token_required(['PATIENT'])
 def registerNewPatient():
     return register_New_Patient()
 

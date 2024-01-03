@@ -32,7 +32,7 @@ def change_Password(EmailId,NewPassword):
     try:
         userId=UserTable.query.filter_by(emailId=EmailId).first()
         if userId:
-            userId.password=NewPassword
+            userId.password = NewPassword
             update_in_entity()
             return True
         else:

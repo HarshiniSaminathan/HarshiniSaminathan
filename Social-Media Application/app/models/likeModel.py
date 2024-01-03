@@ -1,4 +1,3 @@
-
 from app.models.dbModels import db
 
 

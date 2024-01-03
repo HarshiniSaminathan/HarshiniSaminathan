@@ -1,5 +1,6 @@
 from flask import Blueprint
 
+from app.service.busService import sending_SMS
 from app.service.userService import user_sign_up, bus_booking, users_Travelled_Bookings, users_Upcoming_Bookings
 
 userapi_blueprint = Blueprint('userapi', __name__, url_prefix='/api/user')
@@ -23,3 +24,7 @@ def usersTravelledBookings():
 @userapi_blueprint.route('usersUpcomingBookings', methods=['GET'])
 def usersUpcomingBookings():
     return users_Upcoming_Bookings()
+
+@userapi_blueprint.route('sendingSMS',methods=['POST'])
+def sendingSMS():
+    return sending_SMS()

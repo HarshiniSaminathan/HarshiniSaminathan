@@ -89,3 +89,9 @@ def Upcoming_Bookings(emailid):
             travelled_booking = {**bus_details, **booking_details}
             travelled_bookings.append(travelled_booking)
     return travelled_bookings
+
+def booking_id_exists(booking_id):
+    return Bookings.objects(id=booking_id).first()
+
+def smsSendingToPhNum(booking_id):
+    return Bookings.objects(id=booking_id).first()

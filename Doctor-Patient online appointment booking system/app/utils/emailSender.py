@@ -25,6 +25,7 @@ def send_appointment_Status(doctor_email, patient_email, appointment_date, appoi
     body = f"Dear Patient, \n\nDoctor {doctor_email} has responded to your appointment request on {appointment_date} at {appointment_time}.\n\nAPPOINTMENT STATUS: {appointmentStatus}"
     message = Message(subject, sender=sender, recipients=[patient_email], body=body)
     mail.send(message)
+
 def send_PMR_Report(doctor_email, patient_email,appointment_time,PMReport,appointment_date,description):
     subject ='PMR - REPORT ADDED'
     body =(f'Dear Doctor,\n\nPatient {patient_email}, has added PMR - REPORT for appointment on {appointment_date} at {appointment_time}.\n\n'

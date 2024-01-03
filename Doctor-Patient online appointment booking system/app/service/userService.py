@@ -35,7 +35,7 @@ def token_required(allowed_roles):
             try:
                 payload = jwt.decode(token, SECRET_KEY, algorithms=['HS256'], leeway=10)
                 EmailId = payload['EmailId']
-                role = payload['Role']
+                role = payload['Role']  # instead of sending ROLE IN Token (Using Email we can Take ROLE in DB)
 
                 session_code = generate_session_code(user_info={'EmailId': EmailId, 'Role': role})
                 print("session-CODE-API-VERIFY", session_code)
@@ -44,7 +44,6 @@ def token_required(allowed_roles):
                     return failure_response(statuscode='403', content=f'Access restricted. User is not authorized')
 
                 if not check_emailhas_sessionCode(EmailId,session_code):   # session Code verifying  in the USER TABLE
-
                     return failure_response(statuscode='401', content='Token has been invalidated (logged out)')
 
             except jwt.ExpiredSignatureError:
@@ -100,12 +99,14 @@ def login_user():
                     Role = roles.role
                     user_info = {'EmailId': EmailId, 'Role': Role}
                     jwt_token = generate_jwt_token(user_info)
-                    jwt_token_str = jwt_token.decode('utf-8')
-                    if jwt_token_str:
+                    print(jwt_token)
+                    # jwt_token_str = jwt_token.decode('utf-8')
+                    # print(jwt_token_str)
+                    if jwt_token:
                         session_code = generate_session_code(user_info={'EmailId': EmailId, 'Role': Role})
                         print("session-CODE-LOGIN",session_code)
                         updateSessionCode(EmailId,session_code)   # session Code add in the USER TABLE
-                        return success_response({"data": Role, "token": jwt_token_str})
+                        return success_response({"data": Role, "token": jwt_token})
                     else:
                         return failure_response(statuscode='400', content='User Invalid')
             else:
@@ -213,6 +214,3 @@ def change_Password_By_Otp():
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
-
-
-

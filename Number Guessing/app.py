@@ -1,5 +1,5 @@
 import random
-from flask import Flask, jsonify, request
+from flask import Flask,request
 from response import success_response,failure_response
 app = Flask(__name__)
 
@@ -9,7 +9,7 @@ print(GeneratedNumber,'want to guess')
 
 
 def clues(GeneratedNumber):
-    if int(GeneratedNumber) % 2 ==0 :
+    if int(GeneratedNumber) % 2 == 0 :
         return 'EVEN Number'
     else:
         return 'ODD Number'
@@ -111,7 +111,5 @@ def guessed_number():
         return failure_response(
             {'message': f'GAME OVER The Number : {GeneratedNumber}', 'Score': f'Your Current Score: {TotalScore}'})
 
-
-
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5009)

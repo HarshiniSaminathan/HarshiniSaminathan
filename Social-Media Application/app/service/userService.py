@@ -70,7 +70,7 @@ def user_Sign_Up():
             fullname = data['fullname']
             accountType = data['accountType']
             role = "USER"
-            status="INACTIVE"
+            status = "INACTIVE"
             if not check_email_existence(emailid):
                 if not check_username_existence(username):
                     insert_user(emailid, password, username, fullname, role, status,accountType)
@@ -631,7 +631,7 @@ def view_Post_Of_ParticularFriend():
                                 status = status_for_request(emailid, followingEmailid).status
                                 print(status)
                                 if status == 'ACCEPTED':
-                                    get_friends_post, total_pages,total_Post = Get_Particular_friends_post(emailid,followingEmailid,int(page_header), int(per_page_header))
+                                    get_friends_post, total_pages,total_Post = Get_Particular_friends_post(followingEmailid,int(page_header), int(per_page_header))
                                     return success_response({'data': get_friends_post ,'Total-Post':total_Post,'Pagination': str(total_pages)})
                                 return failure_response(statuscode='409', content=f'Not following')
 

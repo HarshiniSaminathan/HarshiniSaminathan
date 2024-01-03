@@ -1,6 +1,4 @@
-
 import os
-
 
 from flask import request, send_file, Response
 import base64
@@ -128,11 +126,9 @@ def add_Slot_To_Doctors():
         slotStatus = True    #  initially slotstatus will be True
         if check_email_existence(doctorEmailId):
             if check_slot_inserted(doctorEmailId,slotStartTime):
-                return failure_response(statuscode='409', content='Ths slot timimgs inserted already')
-
+                return failure_response(statuscode='409', content='Ths slot timings inserted already')
             insert_slot(doctorEmailId, slotStartTime, slotStatus, slotEndTime)
             return success_response('Slot Added Successfully')
-
         return failure_response(statuscode='409', content='Email id does not exists')
     except Exception as e:
         print(f"Error: {e}")

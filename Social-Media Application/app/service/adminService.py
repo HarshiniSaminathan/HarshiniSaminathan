@@ -19,7 +19,7 @@ def get_All_InactiveUser():
 
         inactive_users, total_pages = fetch_inactiveUser_records(int(page_header), int(per_page_header))
 
-        return success_response({'data': inactive_users ,'Pagination': str(total_pages)})
+        return success_response({'data': inactive_users,'Pagination': str(total_pages)})
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
@@ -57,7 +57,7 @@ def get_All_ActivatedUsers():
 
         active_users, total_pages = fetch_active_user_records(int(page_header), int(per_page_header))
 
-        return success_response({'data': active_users ,'Pagination': str(total_pages)})
+        return success_response({'data': active_users,'Pagination': str(total_pages)})
     except Exception as e:
         print(f"Error: {e}")
         return failure_response(statuscode='500', content='An unexpected error occurred.')
