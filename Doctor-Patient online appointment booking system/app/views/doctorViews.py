@@ -14,6 +14,7 @@ def ResponseForAppointmnets(doctorEmailId):
 @doctorapi_blueprint.route("getDoctorAppointments/<string:doctorEmailId>",methods=['GET'])
 @token_required(['DOCTOR'])
 def getDoctorAppointments(doctorEmailId):
+    print(doctorEmailId)
     return get_doctor_appointments(doctorEmailId)
 
 @doctorapi_blueprint.route("getAppointmentsCount/<string:doctorEmailId>",methods=['GET'])

@@ -246,12 +246,14 @@ def add_PMReports():
         return failure_response(statuscode='500', content='An unexpected error occurred.')
 
 def upload_PMReport():
+
     try:
         from app.utils.commanUtils import add_in_entity
         from run import UPLOAD_FOLDER
         file = request.files['file']
         # data = request.form.to_dict()
         form_data = request.form.get('data')
+
         try:
             data = json.loads(form_data)
         except json.JSONDecodeError:
@@ -261,6 +263,7 @@ def upload_PMReport():
         appointmentDate = data['appointmentDate']
         appointmentTime = data['appointmentTime']
         description = data['description']
+        print(doctorEmailId,patientEmailId,appointmentDate,appointmentTime)
         if check_email_existence(doctorEmailId):
             if check_email_existence(patientEmailId):
                 if check_appointmentAccepted(doctorEmailId,patientEmailId,appointmentDate,appointmentTime):

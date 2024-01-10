@@ -87,6 +87,7 @@ def storeRecordsOfCSVInDB():
 @adminapi_blueprint.route('/download_csv',methods=['GET'])
 def downloadcsv():
     return download_csv()
+
 @adminapi_blueprint.route("/data_analytics", methods=["GET"])
 def dataAnalytics():
     return data_analytics()

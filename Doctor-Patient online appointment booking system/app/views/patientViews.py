@@ -59,6 +59,7 @@ def addPMReports():
 @patientapi_blueprint.route("uploadPMReport",methods=['POST'])
 @token_required(['PATIENT'])
 def uploadPMReport():
+    print("inside")
     return upload_PMReport()
 
 @patientapi_blueprint.route("/viewPrescription",methods=['GET'])

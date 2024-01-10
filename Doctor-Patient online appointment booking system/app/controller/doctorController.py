@@ -128,6 +128,7 @@ def doctor_appointments(doctorEmailId, page, per_page):
                 "medicalRecords": records_for_appointment
                 })
         return result, appointments_info.pages
+
     else:
         return None
 
