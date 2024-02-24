@@ -11,8 +11,9 @@ from app.models.slotModel import slotTable
 from app.models.feedbackModel import FeedbackSession
 
 
-def insert_doctor(doctorName, doctorPhoneNumber, doctorAddress, doctorExperience, doctorSpecialization, binary_data,doctorEmailId):
-    new_doctor=DoctorTable(
+def insert_doctor(doctorName, doctorPhoneNumber, doctorAddress, doctorExperience, doctorSpecialization, binary_data,
+                  doctorEmailId):
+    new_doctor = DoctorTable(
         doctorName=doctorName,
         doctorPhoneNumber=doctorPhoneNumber,
         doctorAddress=doctorAddress,
@@ -24,14 +25,13 @@ def insert_doctor(doctorName, doctorPhoneNumber, doctorAddress, doctorExperience
     add_in_entity(new_doctor)
 
 
-def insert_role_password(EmailId,password,role):
-    new_user=UserTable(
+def insert_role_password(EmailId, password, role):
+    new_user = UserTable(
         emailId=EmailId,
         password=password,
         role=role
     )
     add_in_entity(new_user)
-
 
 
 def fetch_doctor_records(page, per_page):
@@ -58,18 +58,19 @@ def fetch_doctor_records(page, per_page):
 
 
 def get_total_doctor():
-    total_doctors=DoctorTable.query.count()
+    total_doctors = DoctorTable.query.count()
     return total_doctors
 
 
 def insert_admin(adminName, adminPhoneNumber, adminAddress, emailId):
-    new_admin=AdminTable(
+    new_admin = AdminTable(
         adminName=adminName,
         adminPhoneNumber=adminPhoneNumber,
         adminAddress=adminAddress,
         emailId=emailId
     )
     add_in_entity(new_admin)
+
 
 def emailSendAsTableFormat():
     query = DoctorTable.query
@@ -104,7 +105,7 @@ def fetch_admin_records(page, per_page):
 
         return data, admin_info.pages
     else:
-        data=[{"data":None}]
+        data = [{"data": None}]
         return data
 
 
@@ -112,8 +113,9 @@ def get_total_admin():
     total_admins = AdminTable.query.count()
     return total_admins
 
+
 def findDoctorId(doctorEmailId):
-    found_doctor=DoctorTable.query.filter_by(doctorEmailId=doctorEmailId).first()
+    found_doctor = DoctorTable.query.filter_by(doctorEmailId=doctorEmailId).first()
     if found_doctor:
         doctorId = found_doctor.doctorId
         return doctorId
@@ -121,9 +123,9 @@ def findDoctorId(doctorEmailId):
         return None
 
 
-def insert_slot(doctorEmailId, slotStartTime, slotStatus,slotEndTime):
-    doctorId=findDoctorId(doctorEmailId)
-    new_slot=slotTable(
+def insert_slot(doctorEmailId, slotStartTime, slotStatus, slotEndTime):
+    doctorId = findDoctorId(doctorEmailId)
+    new_slot = slotTable(
         doctorId=doctorId,
         slotStatus=slotStatus,
         slotStartTime=slotStartTime,
@@ -131,7 +133,8 @@ def insert_slot(doctorEmailId, slotStartTime, slotStatus,slotEndTime):
     )
     add_in_entity(new_slot)
 
-def check_slot_inserted(doctorEmailId,slotStartTime):
+
+def check_slot_inserted(doctorEmailId, slotStartTime):
     doctorId = findDoctorId(doctorEmailId)
     existing_slot = slotTable.query.filter_by(doctorId=doctorId, slotStartTime=slotStartTime).first()
     if existing_slot:
@@ -139,10 +142,11 @@ def check_slot_inserted(doctorEmailId,slotStartTime):
     else:
         return False
 
-def updateSlots(doctorEmailId,slotStartTime, slotEndTime,slotStatus):
+
+def updateSlots(doctorEmailId, slotStartTime, slotEndTime, slotStatus):
     try:
         doctorId = findDoctorId(doctorEmailId)
-        slots=slotTable.query.filter_by(doctorId=doctorId,slotStartTime=slotStartTime,slotEndTime=slotEndTime)
+        slots = slotTable.query.filter_by(doctorId=doctorId, slotStartTime=slotStartTime, slotEndTime=slotEndTime)
         if slots:
             for slot in slots:
                 slot.slotStatus = slotStatus
@@ -154,18 +158,20 @@ def updateSlots(doctorEmailId,slotStartTime, slotEndTime,slotStatus):
         return False
 
 
-def addFeedbackResponse(patientId,feedbackTextForAdmin,rating,feedbackResponse):
+def addFeedbackResponse(patientId, feedbackTextForAdmin, rating, feedbackResponse):
     try:
-        feedback=FeedbackSession.query.filter_by(patientId=patientId,feedbackTextForAdmin=feedbackTextForAdmin,rating=rating)
+        feedback = FeedbackSession.query.filter_by(patientId=patientId, feedbackTextForAdmin=feedbackTextForAdmin,
+                                                   rating=rating)
         if feedback:
             for feeds in feedback:
-                feeds.feedbackResponse=feedbackResponse
+                feeds.feedbackResponse = feedbackResponse
             update_in_entity()
             return True
         else:
             return False
     except Exception as e:
         return False
+
 
 def get_feedbacks(page, per_page):
     query = (
@@ -195,7 +201,7 @@ def get_feedbacks(page, per_page):
 
         return data_list, feedbacks_info.pages
     else:
-        data=[{"data":None}]
+        data = [{"data": None}]
         return data
 
 

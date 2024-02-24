@@ -1,0 +1,82 @@
+{
+  "$id": "user_model.json",
+  "title": "user_model",
+  "description": "users schema",
+  "type": "object",
+  "properties": {
+    "contact_details": {
+      "ref": "contact_model.json"
+    },
+    "password": {
+      "type": "string",
+      "pattern": "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{1,8}$"
+    },
+    "password_update_on": {
+      "type": "string"
+    },
+    "password_salt": {
+      "type": "string"
+    },
+    "encryption_type": {
+      "type": "string"
+    },
+    "login_attempts": {
+      "type": "integer"
+    },
+    "role": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15
+    },
+    "org_id": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-f\\d]{24}$": {
+              "type": "object",
+              "properties": {
+                "zone": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "location": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "hub": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "auditor": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+    "phone_verified": {
+      "type": "boolean"
+    },
+    "email_verified": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active","inactive","pending"]
+    },
+    "base_model": {
+      "$ref": "base_model.json"
+    }
+  },
+  "required": [
+    "contact_details"
+  ]
+}

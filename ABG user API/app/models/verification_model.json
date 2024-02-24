@@ -1,0 +1,56 @@
+{
+  "$id": "verification_model.json",
+  "title": "verification",
+  "description": "schema for user verification ",
+  "type": "object",
+  "properties": {
+    "verification_link": {
+      "type": "string"
+    },
+    "token": {
+      "type": "string"
+    },
+    "expiration_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "payload": {
+      "type": "object",
+      "properties": {
+        "device_verification_id": {
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string"
+        },
+        "first_name": {
+          "type": "string"
+        },
+        "last_name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "phone_code": {
+          "type": "string"
+        }
+      }
+    },
+    "attempts": {
+      "type": "integer"
+    },
+    "type": {
+      "type": "string"
+    },
+    "base_model": {
+      "$ref": "base_model.json"
+    }
+  },
+  "required": [
+    "payload"
+  ]
+}

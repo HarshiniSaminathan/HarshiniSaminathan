@@ -12,6 +12,8 @@ from flask_caching import Cache
 from celery import Celery
 from flask_migrate import Migrate
 from authlib.integrations.flask_client import OAuth
+import jwt
+from datetime import datetime, timedelta
 
 
 from app.views.userViews import loginapi_blueprint
@@ -79,21 +81,125 @@ def googleLogin():
     session["oauth_state"] = state
     return oauth.google.authorize_redirect(redirect_uri=url_for("googleCallback", _external=True), state=state)
 
+import jwt
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+def generate_public_key(private_key_path, public_key_path):
+    # Load the private key from file
+    with open(private_key_path, 'rb') as file:
+        private_key = serialization.load_pem_private_key(
+            file.read(),
+            password=None,
+            backend=default_backend()
+        )
+
+    # Obtain the public key
+    public_key = private_key.public_key()
+
+    # Serialize the public key to PEM format
+    public_key_pem = public_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    )
+
+    # Save the public key to a file
+    with open(public_key_path, 'wb') as file:
+        file.write(public_key_pem)
+
+
+
+import jwt
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+
+# def decode_oauth_token(oauth_token):
+#     try:
+#         public_key_path="private_key.pem"
+#         # Load the public key from file
+#         with open(public_key_path, 'rb') as file:
+#             private_key = serialization.load_pem_private_key(
+#                 file.read(),
+#                 password=None,  # Change this to your actual password
+#                 backend=default_backend()
+#             )
+#
+#         issuer = 'https://accounts.google.com'  # Replace with your actual issuer
+#         private_key_bytes = private_key.private_bytes(
+#             encoding=serialization.Encoding.PEM,
+#             format=serialization.PrivateFormat.TraditionalOpenSSL,
+#             encryption_algorithm=serialization.NoEncryption()
+#         )
+#
+#         # Convert the private key bytes to string
+#         private_key_str = private_key_bytes.decode('utf-8')
+#         print("private_key_str",private_key_str)
+#
+#         decoded_token = jwt.decode(oauth_token, key=private_key_str, algorithms=['RS256'], issuer=issuer)
+#
+#         return decoded_token
+#     except jwt.ExpiredSignatureError:
+#         print("Token has expired.")
+#     except jwt.InvalidTokenError:
+#         print("Invalid token format or content.")
+#     except Exception as e:
+#         print(f"An unexpected error occurred: {e}")
+
+ISSUER = 'https://accounts.google.com'
+
+
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+
+import base64
+import json
+
+def decode_oauth_token(oauth_token):
+    try:
+        header, payload, signature = oauth_token.split('.')
+
+        decoded_header = base64.urlsafe_b64decode(header + '==').decode('utf-8')
+        decoded_payload = base64.urlsafe_b64decode(payload + '==').decode('utf-8')
+
+        header_dict = json.loads(decoded_header)
+        payload_dict = json.loads(decoded_payload)
+
+        print("Decoded Header:", header_dict)
+        print("Decoded Payload:", payload_dict)
+
+        return payload_dict
+
+    except Exception as e:
+        print(f"Error decoding OAuth token: {e}")
+        return None
+
+
 @app.route("/signin-google")
 def googleCallback():
     try:
         received_state = request.args.get("state")
         stored_state = session.pop("oauth_state", None)
 
-        print(received_state,"received state")
-        print(stored_state,"stored state")
 
         if received_state != stored_state:
             return "CSRF Warning! State mismatch."
 
         token = oauth.google.authorize_access_token()
+        oAuthToken =token['access_token']
+        email = token['userinfo']['email']
+        id_token = token['id_token']
+        decoded_token = decode_oauth_token(id_token)
+        user_id = decoded_token.get('sub')
+        email = decoded_token.get('email')
+        exp = decoded_token.get('exp')
+        print("user_id",user_id,"email",email,"exp",exp)
 
-        print("hello",token)
+        print("decoded_token",decoded_token)
+
 
         # person_data_url = "https://people.googleapis.com/v1/people/me?personFields=genders,birthdays"
         # person_data = requests.get(person_data_url, headers={"Authorization": f"Bearer {token['access_token']}"})
@@ -168,4 +274,4 @@ if __name__ == "__main__":
         # db.drop_all()
         db.create_all()
     scheduler.start()
-    app.run(debug=True)
+    app.run(debug=True,port=5000)

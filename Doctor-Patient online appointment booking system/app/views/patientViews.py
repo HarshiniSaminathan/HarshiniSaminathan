@@ -27,7 +27,7 @@ def getAllSlotsforDcotor(doctorEmailId):
     return get_slotsfor_doctor(doctorEmailId)
 
 @patientapi_blueprint.route("requestingForAppointmnet/<string:patientEmailId>",methods=['POST'])
-@token_required(['PATIENT'])
+# @token_required(['PATIENT'])
 def requestingForAppoinments(patientEmailId):
     return requesting_for_appointment(patientEmailId)
 
@@ -52,12 +52,12 @@ def CheckSlotAvailabilityForDoctor():
     return Check_Slot_Availability_Doctor()
 
 @patientapi_blueprint.route("/addPMReports",methods=['POST']) # done before FILE UPLOADING API (BLOB FORMAT)
-@token_required(['PATIENT'])
+# @token_required(['PATIENT'])
 def addPMReports():
     return add_PMReports()
 
 @patientapi_blueprint.route("uploadPMReport",methods=['POST'])
-@token_required(['PATIENT'])
+# @token_required(['PATIENT'])
 def uploadPMReport():
     print("inside")
     return upload_PMReport()

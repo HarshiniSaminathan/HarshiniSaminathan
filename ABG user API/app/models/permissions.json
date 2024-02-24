@@ -1,0 +1,33 @@
+{
+  "$id": "permission_model.json",
+  "title": "permission_model",
+  "description": "schema to store permission data details",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "endpoint": {
+      "type": "string"
+    },
+    "method": {
+      "type": "string"
+    },
+    "dependency": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "key": {
+      "type": "string"
+    },
+    "sorting_position": {
+      "type": "integer"
+    },
+    "group": {
+      "type": "string"
+    }
+  },
+  "required": ["name", "endpoint", "method", "dependency", "description", "key", "sorting_position", "group"]
+}

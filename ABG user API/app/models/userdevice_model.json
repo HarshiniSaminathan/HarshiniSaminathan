@@ -1,0 +1,39 @@
+{
+  "$id": "userdevice_model.json",
+  "title": "user_device",
+  "description": "schema to store users divice info",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string"
+    },
+    "device_id": {
+      "type": "string"
+    },
+    "session_code": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 15
+    },
+    "login_at": {
+      "type": "string"
+    },
+    "logout_at": {
+      "type": "string"
+    },
+    "is-active": {
+      "type": "boolean"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active","inactive","pending"]
+    },
+    "base_model": {
+      "$ref": "base_model.json"
+    }
+  },
+  "required": [
+    "user_id",
+    "device_id"
+  ]
+}

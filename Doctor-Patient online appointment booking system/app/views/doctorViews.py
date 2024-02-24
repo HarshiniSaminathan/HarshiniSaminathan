@@ -7,12 +7,12 @@ from app.service.userService import token_required
 
 doctorapi_blueprint = Blueprint('doctorapi', __name__, url_prefix='/api/doctor')
 @doctorapi_blueprint.route("ResponseForAppointmnets/<string:doctorEmailId>",methods=['PUT'])
-@token_required(['DOCTOR'])
+# @token_required(['DOCTOR'])
 def ResponseForAppointmnets(doctorEmailId):
     return responding_for_appointment(doctorEmailId)
 
 @doctorapi_blueprint.route("getDoctorAppointments/<string:doctorEmailId>",methods=['GET'])
-@token_required(['DOCTOR'])
+# @token_required(['DOCTOR'])
 def getDoctorAppointments(doctorEmailId):
     print(doctorEmailId)
     return get_doctor_appointments(doctorEmailId)
@@ -36,7 +36,7 @@ def responseForFeedback():
     return response_For_Feedback_()
 
 @doctorapi_blueprint.route("/getAllPMReports",methods=['GET'])
-@token_required(['DOCTOR'])
+# @token_required(['DOCTOR'])
 def getAllPMReports():
     return get_All_PMReports()
 

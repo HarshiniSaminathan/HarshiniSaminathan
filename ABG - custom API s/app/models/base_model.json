@@ -1,0 +1,30 @@
+{
+  "$id": "base_model",
+  "title": "base_model",
+  "description": "Base schema",
+  "type": "object",
+  "properties": {
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "deleted_at": {
+      "type": "string"
+    },
+    "created_by": {
+      "type": "string"
+    },
+    "updated_by": {
+      "type": "string"
+    },
+    "deleted_by": {
+      "type": "string"
+    },
+    "is_deleted": {
+      "type": "string"
+    }
+  },
+  "required": []
+}

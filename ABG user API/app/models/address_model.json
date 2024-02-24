@@ -1,0 +1,41 @@
+{
+  "$id": "address_model.json",
+  "title": "address_model",
+  "description": "schema to store address details",
+      "type": "object",
+      "properties": {
+        "address_line1": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 25
+        },
+        "address_line2": {
+          "type": "string"
+        },
+        "district": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "state": {
+          "type": "string"
+        },
+        "pin_code": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 15
+        },
+        "country": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "address_line1",
+        "district",
+        "country",
+        "city",
+        "state",
+        "pin_code"
+      ]
+    }

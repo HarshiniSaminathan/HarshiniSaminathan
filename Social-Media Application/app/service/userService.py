@@ -99,16 +99,17 @@ def login():
                 user_info = {'EmailId': emailid, 'Role': role}
 
                 jwt_token = generate_jwt_token(user_info)
-                jwt_token_str = jwt_token.decode('utf-8')
+                print(jwt_token)
+                # jwt_token_str = jwt_token.decode('utf-8')
 
                 refresh_token = generate_refresh_token(user_info)
-                refresh_token_str = refresh_token.decode('utf-8')
+                # refresh_token_str = refresh_token.decode('utf-8')
 
-                if jwt_token_str:
+                if jwt_token:
                     session_code = generate_session_code(user_info={'EmailId': emailid, 'Role': role})
                     print("session-CODE-LOGIN", session_code)
                     updateSessionCode(emailid, session_code)  # session Code add in the USER TABLE
-                    return success_response({"data": role, "token": jwt_token_str, "Refresh-Token":refresh_token_str})
+                    return success_response({"data": role, "token": jwt_token, "Refresh-Token":refresh_token})
                 else:
                     return failure_response(statuscode='400', content='User Invalid')
             else:

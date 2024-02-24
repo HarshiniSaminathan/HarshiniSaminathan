@@ -1,0 +1,70 @@
+{
+  "$id": "workflow_model.json",
+  "title": "Workflow",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "The name of the workflow"
+    },
+    "description": {
+      "type": "string",
+      "description": "A description of the workflow"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the step"
+          },
+          "description": {
+            "type": "string",
+            "description": "A description of the step"
+          },
+          "document_schema": {
+            "type": "string",
+            "description": "The name of the JSON schema used for validating documents at this step"
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The roles that are allowed to perform actions at this step"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The name of the action"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "A description of the action"
+                },
+                "next_step": {
+                  "type": "string",
+                  "description": "The name of the next step in the workflow"
+                },
+                "next_workflow": {
+                  "type": "string",
+                  "description": "The name of the next workflow in the sequence"
+                }
+              },
+              "required": ["name"]
+            },
+            "description": "The actions that are allowed at this step"
+          }
+        },
+        "required": ["name", "roles", "actions"]
+      }
+    }
+  },
+  "required": ["name", "steps"]
+}
