@@ -3,11 +3,10 @@ import os
 import random
 import string
 import uuid
-from datetime import datetime
-
-from bson import ObjectId
-
-from app import mongo
+from passlib.context import CryptContext
+from datetime import datetime, timedelta
+from jose import jwt
+from app.config import ACCESS_TOKEN_EXPIRE_MINUTES, SECRET_KEY, ALGORITHM
 
 
 def generate_password_hash(password: str, salt: str) -> str:
@@ -147,3 +146,18 @@ def generate_request_code():
     prefix = 'SRI'
     random_number = random.randint(1000, 9999)
     return f'{prefix}{random_number}'
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
+def get_password_hash(password):
+    return pwd_context.hash(password)
+
+def create_access_token(data: dict, expires_delta: timedelta = None):
+    to_encode = data.copy()
+    expire = datetime.now() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
