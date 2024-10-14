@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import async_session
 from app.schema_validation.userSchema import UserCreate, UserResponse, UserLogin
 from app.services.userService import get_user_by_username, create_user
-from app.utils.generalUtils import verify_password, create_access_token
+from app.utils.generalUtils import verify_password, create_access_token, create_refresh_token
 
 router = APIRouter()
 
@@ -30,4 +30,5 @@ async def login(user: UserLogin, db: AsyncSession = Depends(get_db)):
     if not db_user or not verify_password(user.password, db_user.hashed_password):
         raise HTTPException(status_code=400, detail="Invalid credentials")
     access_token = create_access_token(data={"sub": db_user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+    refresh_token = create_refresh_token(data={"sub": db_user.username})
+    return {"access_token": access_token, "refresh_token": refresh_token}
