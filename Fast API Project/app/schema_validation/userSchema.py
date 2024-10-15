@@ -6,6 +6,14 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str
 
+class UserDetailsCreate(BaseModel):
+    firstName: str
+    lastName: str
+    mobileNumber: str
+    city: str
+    state: str
+    pincode: str
+
 class UserLogin(BaseModel):
     username: str
     password: str
