@@ -1,15 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+import logging
+
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import async_session
 from app.schema_validation.userSchema import UserCreate, UserResponse, UserLogin, UserDetailsCreate
 from app.services.userService import get_user_by_username, create_user, create_user_details, get_current_user, \
     check_user_info, update_user_details
-from app.utils.generalUtils import verify_password, create_access_token, create_refresh_token
+from app.utils.generalUtils import verify_password, create_access_token, create_refresh_token, generate_otp
 from fastapi.security import OAuth2PasswordBearer
+from twilio.rest import Client
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 async def get_db():
     async with async_session() as session:
@@ -25,7 +32,24 @@ async def register(user: UserCreate, db: AsyncSession = Depends(get_db)):
 
 @router.get("/")
 async def get_users():
-    return {"message": "List of users"}
+    message = "List of users"
+    logger.info("Log message %s", message)
+    return {"message": message}
+
+@router.get("/send_otp")
+async def otp_mobilenumber(account_sid: str, auth_token: str, to_number: str):
+    client = Client(account_sid, auth_token)
+    try:
+        otp = generate_otp()
+        message_body = f"Harshini Service - {otp} is your verification code for secure access"
+        message = client.messages.create(
+            from_='+18649774597',
+            body=message_body,
+            to=to_number
+        )
+        return {"message_sid": message.sid, "status": "Message sent successfully"}
+    except Exception as e:
+        return {"error": str(e), "status": "Failed to send message"}
 
 @router.post("/login")
 async def login(user: UserLogin, db: AsyncSession = Depends(get_db)):

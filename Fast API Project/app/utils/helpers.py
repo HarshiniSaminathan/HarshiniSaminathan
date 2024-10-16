@@ -9,11 +9,7 @@ from flask import jsonify
 import bcrypt
 import os
 from os.path import join, dirname
-import jsonref
-import jsonschema
-from jsonschema import Draft7Validator, validators, validate,exceptions,ValidationError,RefResolver
 
-from app import mail
 
 
 # Define commonly used helper functions

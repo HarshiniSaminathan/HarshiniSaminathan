@@ -20,18 +20,4 @@ def setup_logger(app):
     handler.setFormatter(formatter)
     app.logger.addHandler(handler)
 
-def log_request(request):
-    """
-    Log a request.
 
-    :param request: The request to log.
-    """
-    current_app.logger.info('Request: %s %s %s', request.method, request.url, request.data)
-
-def log_response(response):
-    """
-    Log a response.
-
-    :param response: The response to log.
-    """
-    current_app.logger.info('Response: %s %s', response.status_code, response.data)

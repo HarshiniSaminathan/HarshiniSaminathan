@@ -124,26 +124,6 @@ def generate_session_code():
         return None
 
 
-def update_session(user_id, device_id=None):
-    session_code = generate_session_code()
-    query = {'user_id':user_id}
-    if device_id:
-        query['device_id'] = device_id
-        user_device = mongo.db.user_device.find_one(query)
-        if not user_device:
-            user_device = {'user_id': user_id, 'device_id': device_id, 'session_code': session_code, 'status': 'active'}
-            mongo.db.user_device.insert_one(user_device)
-        else:
-            user_device['session_code'] = session_code
-            mongo.db.user_device.update_one({'_id': user_device['_id']}, {'$set': {'session_code': session_code}})
-    else:
-        user_devices = mongo.db.user_devices.find(query)
-        for user_device in user_devices:
-            user_device['session_code'] = session_code
-            mongo.db.user_devices.update_one({'_id': user_device['_id']}, {'$set': {'session_code': session_code}})
-    return session_code
-
-
 def generate_request_code():
     prefix = 'SRI'
     random_number = random.randint(1000, 9999)
@@ -185,3 +165,6 @@ def verify_token(token: str):
     except JWTError:
         raise credentials_exception
     return username
+
+def generate_otp() -> str:
+    return str(random.randint(100000, 999999))
