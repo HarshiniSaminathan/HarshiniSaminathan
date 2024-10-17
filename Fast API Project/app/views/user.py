@@ -1,9 +1,10 @@
 import logging
-
+import requests
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.config import async_session
+from app.config import async_session, GOOGLE_API_KEY
 from app.schema_validation.userSchema import UserCreate, UserResponse, UserLogin, UserDetailsCreate
 from app.services.userService import get_user_by_username, create_user, create_user_details, get_current_user, \
     check_user_info, update_user_details
@@ -82,3 +83,49 @@ async def save_user_details(
     else:
         new_user_info = await create_user_details(db, user, current_user.id)
         return {"message": "User details created successfully", "user_info": new_user_info}
+
+
+
+
+def get_distance_and_time(delivery_lat, delivery_lng, destination_lat, destination_lng):
+    """
+    Get distance and time using Google Maps Distance Matrix API.
+    """
+    url = f"https://maps.googleapis.com/maps/api/distancematrix/json"
+    params = {
+        'origins': f"{delivery_lat},{delivery_lng}",
+        'destinations': f"{destination_lat},{destination_lng}",
+        'key': GOOGLE_API_KEY,
+        'mode': 'driving'
+    }
+
+    response = requests.get(url, params=params)
+    result = response.json()
+    print("result",result)
+
+    if result['status'] == 'OK':
+        distance_text = result['rows'][0]['elements'][0]['distance']['text']
+        duration_text = result['rows'][0]['elements'][0]['duration']['text']
+        return distance_text, duration_text
+    else:
+        return None, None
+
+class Location(BaseModel):
+    delivery_latitude: float
+    delivery_longitude: float
+    destination_latitude: float
+    destination_longitude: float
+
+@router.post("/get_delivery_details")
+async def get_delivery_details(location: Location):
+    delivery_lat = location.delivery_latitude
+    delivery_lng = location.delivery_longitude
+    destination_lat = location.destination_latitude
+    destination_lng = location.destination_longitude
+
+    distance, time = get_distance_and_time(delivery_lat, delivery_lng, destination_lat, destination_lng)
+
+    if distance and time:
+        return {"distance": distance, "time_estimate": time}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to calculate distance and time")
